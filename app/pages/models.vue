@@ -8,15 +8,13 @@ definePageMeta({ title: 'Model Usage' })
 const hoursWindow = ref(6)
 const daysWindow = ref(7)
 
-const { data: modelStats } = useConvexQuery(api.modelUsage.byModel, computed(() => ({
+const { data: usageSummary } = useConvexQuery(api.modelUsage.summary, computed(() => ({
   hours: hoursWindow.value
 })))
-const { data: providerStats } = useConvexQuery(api.modelUsage.byProvider, computed(() => ({
-  hours: hoursWindow.value
-})))
-const { data: latencyStats } = useConvexQuery(api.modelUsage.latencyStats, computed(() => ({
-  hours: hoursWindow.value
-})))
+
+const modelStats = computed(() => usageSummary.value?.byModel ?? null)
+const providerStats = computed(() => usageSummary.value?.byProvider ?? null)
+const latencyStats = computed(() => usageSummary.value?.latencyStats ?? null)
 const { data: dailySummary } = useConvexQuery(api.modelUsage.dailySummary, computed(() => ({
   days: daysWindow.value
 })))

@@ -154,6 +154,95 @@ export const latencyStats = query({
   }
 })
 
+// Combined query: one DB read, returns byModel + byProvider + latencyStats together.
+// Use this instead of calling byModel/byProvider/latencyStats separately to
+// avoid 3x subscription re-executions on every modelUsage write.
+export const summary = query({
+  args: {
+    hours: v.optional(v.number())
+  },
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - (args.hours ?? 6) * 60 * 60 * 1000
+
+    const usage = await ctx.db
+      .query('modelUsage')
+      .withIndex('by_time', q => q.gte('timestamp', cutoff))
+      .order('desc')
+      .take(MAX_RECORDS)
+
+    const byModel: Record<string, {
+      calls: number
+      totalTokens: number
+      totalCost: number
+      avgLatency: number
+    }> = {}
+    const byProvider: Record<string, {
+      calls: number
+      totalTokens: number
+      totalCost: number
+      models: string[]
+    }> = {}
+    const modelLatencies: Record<string, number[]> = {}
+    const modelSets: Record<string, Set<string>> = {}
+    const allLatencies: number[] = []
+
+    for (const u of usage) {
+      // byModel
+      if (!byModel[u.model]) {
+        byModel[u.model] = { calls: 0, totalTokens: 0, totalCost: 0, avgLatency: 0 }
+        modelLatencies[u.model] = []
+      }
+      byModel[u.model]!.calls++
+      byModel[u.model]!.totalTokens += u.totalTokens
+      byModel[u.model]!.totalCost += u.costUsd ?? 0
+      modelLatencies[u.model]!.push(u.durationMs)
+
+      // byProvider
+      if (!byProvider[u.provider]) {
+        byProvider[u.provider] = { calls: 0, totalTokens: 0, totalCost: 0, models: [] }
+        modelSets[u.provider] = new Set()
+      }
+      byProvider[u.provider]!.calls++
+      byProvider[u.provider]!.totalTokens += u.totalTokens
+      byProvider[u.provider]!.totalCost += u.costUsd ?? 0
+      modelSets[u.provider]!.add(u.model)
+
+      allLatencies.push(u.durationMs)
+    }
+
+    for (const model of Object.keys(byModel)) {
+      const lats = modelLatencies[model]!
+      byModel[model]!.avgLatency = Math.round(
+        lats.reduce((a, b) => a + b, 0) / lats.length
+      )
+    }
+    for (const provider of Object.keys(byProvider)) {
+      byProvider[provider]!.models = Array.from(modelSets[provider]!)
+    }
+
+    let latencyStats = null
+    if (allLatencies.length > 0) {
+      const sorted = [...allLatencies].sort((a, b) => a - b)
+      const percentile = (p: number) => {
+        const idx = Math.ceil((p / 100) * sorted.length) - 1
+        return sorted[Math.max(0, idx)]
+      }
+      latencyStats = {
+        count: sorted.length,
+        min: sorted[0],
+        max: sorted[sorted.length - 1],
+        avg: Math.round(sorted.reduce((a, b) => a + b, 0) / sorted.length),
+        p50: percentile(50),
+        p90: percentile(90),
+        p95: percentile(95),
+        p99: percentile(99)
+      }
+    }
+
+    return { byModel, byProvider, latencyStats }
+  }
+})
+
 export const dailySummary = query({
   args: {
     days: v.optional(v.number())
