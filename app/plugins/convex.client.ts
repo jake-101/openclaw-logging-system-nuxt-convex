@@ -29,13 +29,30 @@ export default defineNuxtPlugin((nuxtApp) => {
   // Route guard: use Better Auth session to protect all routes except /login
   nuxtApp.hook('app:created', () => {
     const router = useRouter()
+    // Create a single shared session ref — reused across all guard invocations
+    const session = authClient.useSession()
+
     router.beforeEach(async (to) => {
       if (to.path === '/login') return true
-      const session = authClient.useSession()
-      // isPending is true on first tick — wait briefly for cookie session to resolve
+
+      // If the session is still resolving, wait for isPending to clear rather
+      // than using an arbitrary timeout that can lose the race.
       if (session.value?.isPending) {
-        await new Promise(resolve => setTimeout(resolve, 50))
+        await new Promise<void>((resolve) => {
+          const stop = watchEffect(() => {
+            if (!session.value?.isPending) {
+              stop()
+              resolve()
+            }
+          })
+          // Safety timeout: if still pending after 3s, give up and redirect
+          setTimeout(() => {
+            stop()
+            resolve()
+          }, 3000)
+        })
       }
+
       if (!session.value?.data) {
         return { path: '/login' }
       }
