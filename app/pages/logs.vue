@@ -6,7 +6,6 @@ const levelFilter = ref('all')
 const sessionFilter = ref('')
 const searchInput = ref('')
 const searchTerm = refDebounced(searchInput, 300)
-const tailMode = ref(true)
 const logLimit = ref(200)
 
 const isSearching = computed(() => searchTerm.value.trim().length > 0)
@@ -55,10 +54,10 @@ const activeLogs = computed(() => {
   return listLogs.value
 })
 
+// Logs come desc from Convex — newest first (no reverse)
 const sortedLogs = computed(() => {
   if (!activeLogs.value) return []
-  // Logs come desc from Convex, reverse for chronological (tail mode shows newest at bottom)
-  return [...activeLogs.value].reverse()
+  return activeLogs.value
 })
 
 const levelOptions = [
@@ -84,27 +83,31 @@ function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString()
 }
 
-// Auto-scroll to bottom when in tail mode
-const logContainer = ref<HTMLElement | null>(null)
-
-watch(sortedLogs, () => {
-  if (tailMode.value) {
-    nextTick(() => {
-      if (logContainer.value) {
-        logContainer.value.scrollTop = logContainer.value.scrollHeight
-      }
-    })
-  }
-})
-
-const columns = [
-  { accessorKey: 'timestamp', header: 'Time' },
-  { accessorKey: 'level', header: 'Level' },
-  { accessorKey: 'agentId', header: 'Agent' },
-  { accessorKey: 'sessionKey', header: 'Session' },
-  { accessorKey: 'message', header: 'Message' },
-  { accessorKey: 'toolName', header: 'Tool' }
+// All possible columns
+const allColumns = [
+  { accessorKey: 'timestamp', header: 'Time', id: 'timestamp' },
+  { accessorKey: 'level', header: 'Level', id: 'level' },
+  { accessorKey: 'agentId', header: 'Agent', id: 'agentId' },
+  { accessorKey: 'sessionKey', header: 'Session', id: 'sessionKey' },
+  { accessorKey: 'message', header: 'Message', id: 'message' },
+  { accessorKey: 'toolName', header: 'Tool', id: 'toolName' },
+  { accessorKey: 'toolDuration', header: 'Duration', id: 'toolDuration' },
+  { accessorKey: 'toolSuccess', header: 'Success', id: 'toolSuccess' },
+  { accessorKey: 'model', header: 'Model', id: 'model' },
+  { accessorKey: 'channel', header: 'Channel', id: 'channel' }
 ]
+
+const defaultVisible = ['timestamp', 'level', 'agentId', 'sessionKey', 'message', 'toolName']
+const visibleColumnIds = ref<string[]>([...defaultVisible])
+
+const columnOptions = allColumns.map(c => ({
+  label: c.header,
+  value: c.id
+}))
+
+const visibleColumns = computed(() =>
+  allColumns.filter(c => visibleColumnIds.value.includes(c.id))
+)
 </script>
 
 <template>
@@ -133,10 +136,37 @@ const columns = [
       />
 
       <div class="flex items-center gap-2 ml-auto">
-        <USwitch
-          v-model="tailMode"
-          label="Tail mode"
-        />
+        <UPopover>
+          <UButton
+            icon="i-lucide-columns-3"
+            label="Columns"
+            variant="outline"
+            size="sm"
+          />
+
+          <template #content>
+            <div class="p-3 w-48 space-y-2">
+              <p class="text-xs font-medium text-muted mb-2">
+                Visible Columns
+              </p>
+              <label
+                v-for="col in columnOptions"
+                :key="col.value"
+                class="flex items-center gap-2 text-sm cursor-pointer"
+              >
+                <UCheckbox
+                  :model-value="visibleColumnIds.includes(col.value)"
+                  @update:model-value="
+                    $event
+                      ? visibleColumnIds.push(col.value)
+                      : visibleColumnIds = visibleColumnIds.filter(id => id !== col.value)
+                  "
+                />
+                {{ col.label }}
+              </label>
+            </div>
+          </template>
+        </UPopover>
 
         <UBadge
           :label="`${sortedLogs.length} entries`"
@@ -147,13 +177,10 @@ const columns = [
     </div>
 
     <!-- Log Table -->
-    <div
-      ref="logContainer"
-      class="flex-1 overflow-auto min-h-0"
-    >
+    <div class="flex-1 overflow-auto min-h-0">
       <UTable
         :data="sortedLogs"
-        :columns="columns"
+        :columns="visibleColumns"
         :loading="!activeLogs"
         class="w-full"
       >
@@ -198,13 +225,57 @@ const columns = [
               variant="outline"
               size="xs"
             />
-            <span
-              v-if="row.original.toolDuration"
-              class="text-xs text-muted ml-1"
-            >
-              {{ row.original.toolDuration }}ms
-            </span>
           </template>
+          <span
+            v-else
+            class="text-muted text-xs"
+          >—</span>
+        </template>
+
+        <template #toolDuration-cell="{ row }">
+          <span
+            v-if="row.original.toolDuration"
+            class="font-mono text-xs"
+          >{{ row.original.toolDuration }}ms</span>
+          <span
+            v-else
+            class="text-muted text-xs"
+          >—</span>
+        </template>
+
+        <template #toolSuccess-cell="{ row }">
+          <UBadge
+            v-if="row.original.toolSuccess !== undefined && row.original.toolSuccess !== null"
+            :label="row.original.toolSuccess ? 'Yes' : 'No'"
+            :color="row.original.toolSuccess ? 'success' : 'error'"
+            variant="subtle"
+            size="xs"
+          />
+          <span
+            v-else
+            class="text-muted text-xs"
+          >—</span>
+        </template>
+
+        <template #model-cell="{ row }">
+          <span
+            v-if="row.original.model"
+            class="font-mono text-xs"
+          >{{ row.original.model }}</span>
+          <span
+            v-else
+            class="text-muted text-xs"
+          >—</span>
+        </template>
+
+        <template #channel-cell="{ row }">
+          <UBadge
+            v-if="row.original.channel"
+            :label="row.original.channel"
+            variant="subtle"
+            color="neutral"
+            size="xs"
+          />
           <span
             v-else
             class="text-muted text-xs"

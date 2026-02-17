@@ -31,6 +31,11 @@ const navigation: NavigationMenuItem[][] = [[
     label: 'Rate Limits',
     icon: 'i-lucide-shield-alert',
     to: '/rate-limits'
+  },
+  {
+    label: 'Models',
+    icon: 'i-lucide-cpu',
+    to: '/models'
   }
 ], [
   {

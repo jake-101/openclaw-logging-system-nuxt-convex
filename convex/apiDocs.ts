@@ -103,6 +103,25 @@ export const describe = query({
             retryAfter: { type: 'number', required: false, note: 'Seconds until retry (from response header)' },
             context: { type: 'any', required: false, note: 'Additional context about the request' }
           }
+        },
+        'modelUsage.create': {
+          description: 'Record a model API call with token counts, latency, and cost.',
+          args: {
+            sessionKey: { type: 'string', required: true },
+            timestamp: { type: 'number', required: true },
+            provider: { type: 'string', required: true, note: '"anthropic" | "openai" | "openrouter" | etc' },
+            model: { type: 'string', required: true, note: '"claude-sonnet-4-5" | "gpt-5.2" | etc' },
+            channel: { type: 'string', required: false, note: '"telegram" | "discord" | "cron"' },
+            inputTokens: { type: 'number', required: true },
+            outputTokens: { type: 'number', required: true },
+            cacheReadTokens: { type: 'number', required: false },
+            cacheWriteTokens: { type: 'number', required: false },
+            totalTokens: { type: 'number', required: true },
+            durationMs: { type: 'number', required: true, note: 'API call duration in ms' },
+            costUsd: { type: 'number', required: false, note: 'Estimated cost in USD' },
+            contextLimit: { type: 'number', required: false, note: 'Max context window tokens' },
+            contextUsed: { type: 'number', required: false, note: 'Tokens used in context' }
+          }
         }
       },
 
@@ -119,6 +138,10 @@ export const describe = query({
         'rateLimits.listRecent': 'List recent rate limit events within N hours',
         'rateLimits.listByProvider': 'List rate limit events for a specific provider',
         'rateLimits.getStats': 'Get rate limit stats (total, by provider, hourly rate) over N hours',
+        'modelUsage.byModel': 'Aggregate model usage stats (calls, tokens, cost, latency) over N hours',
+        'modelUsage.byProvider': 'Aggregate provider usage stats (calls, tokens, cost, models) over N hours',
+        'modelUsage.latencyStats': 'Get latency percentiles (p50/p90/p95/p99) optionally filtered by model',
+        'modelUsage.dailySummary': 'Daily aggregated calls, tokens, and cost over N days',
         'apiDocs.describe': 'This endpoint -- returns API documentation'
       }
     }

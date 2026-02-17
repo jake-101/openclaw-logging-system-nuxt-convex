@@ -12,6 +12,7 @@ import type * as apiDocs from "../apiDocs.js";
 import type * as cronRuns from "../cronRuns.js";
 import type * as errors from "../errors.js";
 import type * as logs from "../logs.js";
+import type * as modelUsage from "../modelUsage.js";
 import type * as rateLimits from "../rateLimits.js";
 import type * as sessions from "../sessions.js";
 
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   cronRuns: typeof cronRuns;
   errors: typeof errors;
   logs: typeof logs;
+  modelUsage: typeof modelUsage;
   rateLimits: typeof rateLimits;
   sessions: typeof sessions;
 }>;

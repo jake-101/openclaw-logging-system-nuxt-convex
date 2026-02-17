@@ -90,5 +90,33 @@ export default defineSchema({
     context: v.optional(v.any())
   })
     .index('by_provider', ['provider', 'timestamp'])
+    .index('by_time', ['timestamp']),
+
+  // Model usage tracking
+  modelUsage: defineTable({
+    sessionKey: v.string(),
+    timestamp: v.number(),
+    provider: v.string(),
+    model: v.string(),
+    channel: v.optional(v.string()),
+
+    // Tokens
+    inputTokens: v.number(),
+    outputTokens: v.number(),
+    cacheReadTokens: v.optional(v.number()),
+    cacheWriteTokens: v.optional(v.number()),
+    totalTokens: v.number(),
+
+    // Performance
+    durationMs: v.number(),
+    costUsd: v.optional(v.number()),
+
+    // Context
+    contextLimit: v.optional(v.number()),
+    contextUsed: v.optional(v.number())
+  })
+    .index('by_model', ['model', 'timestamp'])
+    .index('by_provider', ['provider', 'timestamp'])
     .index('by_time', ['timestamp'])
+    .index('by_session', ['sessionKey', 'timestamp'])
 })
