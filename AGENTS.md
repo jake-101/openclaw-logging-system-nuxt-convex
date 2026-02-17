@@ -70,8 +70,10 @@ app/                    # Nuxt 4 app directory (all frontend code)
   pages/                 # File-based routing
     login.vue            # Login / first-user setup page (layout: false)
 convex/                 # Convex backend (schema + server functions)
-  schema.ts             # Database schema (8 tables, including auth)
-  auth.ts               # Dashboard auth: register, login, logout, validateSession
+  schema.ts             # Database schema (6 agent tables; Better Auth manages its own)
+  convex.config.ts      # Registers Better Auth Convex component
+  auth.ts               # Better Auth instance (email/password, crossDomain plugin)
+  http.ts               # Mounts Better Auth HTTP route handlers
   logs.ts               # Log CRUD queries/mutations
   sessions.ts           # Session queries/mutations
   errors.ts             # Error tracking queries/mutations
@@ -167,38 +169,49 @@ whether a shared utility, composable, or component already exists:
 
 ## Authentication
 
-The dashboard is protected by simple token-based authentication:
+The dashboard is protected by Better Auth (`better-auth@1.4.9`) via the
+`@convex-dev/better-auth` Convex component.
 
-- **Backend**: `convex/auth.ts` with PBKDF2 password hashing (Web Crypto API)
-- **Frontend**: `useAuth()` composable manages localStorage tokens
-- **Route guard**: `@convex-vue/core` navigation guard redirects to `/login`
-- **First-user setup**: If no users exist, the login page shows a registration
-  form. Subsequent users require an existing admin session.
+- **Backend**: Better Auth HTTP handlers run on the Convex site deployment
+  (`*.convex.site/api/auth/*`), configured in `convex/auth.ts` and mounted
+  in `convex/http.ts`.
+- **Session**: Cookie-based HTTP-only sessions (not localStorage tokens).
+- **Route guard**: `@convex-vue/core` `installNavigationGuard: true` redirects
+  to `/login` for unauthenticated users.
+- **Single user**: Sign-up is disabled by default (`disableSignUp: true` in
+  `convex/auth.ts`). To create the initial account, temporarily set
+  `disableSignUp: false`, start `pnpm convex:dev`, visit `/login`, register,
+  then re-enable `disableSignUp: true`.
 
-**Tables**: `dashboardUsers` (email, passwordHash, passwordSalt) and
-`dashboardSessions` (userId, token, expiresAt). Sessions expire after 7 days.
+**Key files:**
+- `convex/convex.config.ts` -- registers the Better Auth Convex component
+- `convex/auth.ts` -- Better Auth instance (email/password, `crossDomain` plugin)
+- `convex/http.ts` -- mounts Better Auth route handlers on the Convex HTTP router
+- `app/plugins/convex.client.ts` -- creates `authClient` (better-auth/vue) and
+  wires it into `createConvexVue()` as the auth adapter
+- `app/composables/useAuth.ts` -- wraps `better-auth/vue` `useSession()`;
+  exposes `isAuthenticated`, `isLoading`, `userEmail`, `login()`, `logout()`
 
-**Auth composable** (`useAuth()`):
-- `login(email, password)` -- authenticate and store session token
-- `register(email, password)` -- create first user (or with admin token)
-- `logout()` -- invalidate server session and clear local token
-- `checkHasUsers()` -- detect first-user setup mode
-- `isAuthenticated`, `isLoading`, `userEmail` -- reactive state
-- `getToken()` -- returns token for Convex auth adapter
+**Environment variables (set via `npx convex env set`):**
+- `BETTER_AUTH_SECRET` -- random secret for signing sessions (generate with
+  `openssl rand -base64 32`)
+- `SITE_URL` -- the Nuxt app URL (e.g. `http://localhost:3000`) for CORS
+
+**Convex schema**: `dashboardUsers` and `dashboardSessions` tables have been
+removed. Better Auth manages its own tables (created automatically by the
+component on first run).
 
 **Convex plugin** (`convex.client.ts`) passes the auth adapter to
 `createConvexVue()` with `installNavigationGuard: true`. All routes except
-`/login` require authentication.
-
-**Important**: Auth functions use `makeFunctionReference` from `convex/server`
-instead of `api.auth.*` to avoid dependency on generated types. After running
-`npx convex dev` to regenerate types, you can switch to typed `api.auth.*`
-references if preferred.
+`/login` require authentication. The `convexSiteUrl` runtime config variable
+must be set to the Convex site URL (e.g. `http://192.168.10.35:3211`).
 
 ## Convex Schema Overview
 
-Eight tables: `dashboardUsers`, `dashboardSessions`, `logs`, `sessions`,
-`errors`, `cronRuns`, `rateLimits`, `modelUsage`.
+Six tables (agent data): `logs`, `sessions`, `errors`, `cronRuns`,
+`rateLimits`, `modelUsage`. Better Auth adds its own tables automatically
+(users, sessions, accounts, verifications -- do NOT define these in
+`convex/schema.ts`).
 
 - **logs**: Individual log entries with session/agent context and optional tool
   tracking. Indexed by session+timestamp, timestamp, level, and toolName.

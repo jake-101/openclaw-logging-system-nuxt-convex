@@ -39,9 +39,8 @@ export const listRecent = query({
 
     return await ctx.db
       .query('rateLimits')
-      .withIndex('by_time')
+      .withIndex('by_time', q => q.gte('timestamp', cutoff))
       .order('desc')
-      .filter(q => q.gte(q.field('timestamp'), cutoff))
       .take(args.limit ?? 100)
   }
 })
@@ -55,9 +54,7 @@ export const getStats = query({
 
     const events = await ctx.db
       .query('rateLimits')
-      .withIndex('by_time')
-      .order('desc')
-      .filter(q => q.gte(q.field('timestamp'), cutoff))
+      .withIndex('by_time', q => q.gte('timestamp', cutoff))
       .collect()
 
     const byProvider: Record<string, number> = {}

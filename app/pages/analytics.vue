@@ -5,8 +5,8 @@ import { Bar, Doughnut, Line } from 'vue-chartjs'
 
 definePageMeta({ title: 'Analytics' })
 
-const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 100 })
-const { data: logs } = useConvexQuery(api.logs.list, { limit: 500 })
+const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 50 })
+const { data: logs } = useConvexQuery(api.logs.list, { limit: 100 })
 
 // --- Cost over time (by session, sorted by start time) ---
 const costChartData = computed(() => {

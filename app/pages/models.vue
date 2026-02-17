@@ -5,7 +5,7 @@ import { Bar, Doughnut, Line } from 'vue-chartjs'
 
 definePageMeta({ title: 'Model Usage' })
 
-const hoursWindow = ref(24)
+const hoursWindow = ref(6)
 const daysWindow = ref(7)
 
 const { data: modelStats } = useConvexQuery(api.modelUsage.byModel, computed(() => ({
@@ -138,10 +138,9 @@ const modelTableData = computed(() => {
 
 const windowOptions = [
   { label: 'Last 1h', value: 1 },
-  { label: 'Last 6h', value: 6 },
-  { label: 'Last 24h', value: 24 },
-  { label: 'Last 72h', value: 72 },
-  { label: 'Last 7d', value: 168 }
+  { label: 'Last 2h', value: 2 },
+  { label: 'Last 3h', value: 3 },
+  { label: 'Last 6h', value: 6 }
 ]
 
 const { bar: barOptions, costBar: costBarOptions, doughnutRight: doughnutOptions } = useChartOptions()

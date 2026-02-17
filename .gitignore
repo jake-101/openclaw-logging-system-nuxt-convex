@@ -23,5 +23,9 @@ logs
 .env.*
 !.env.example
 
+# Convex compiled output (Convex bundles .ts directly — .js artifacts are noise)
+convex/*.js
+convex/*.js.map
+
 # Beads issue tracker (contains personal data)
 .beads/

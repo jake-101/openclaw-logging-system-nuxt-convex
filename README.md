@@ -53,6 +53,31 @@ pnpm dev
 
 The dashboard will be available at `http://localhost:3000`.
 
+### Authentication
+
+The dashboard uses [Better Auth](https://better-auth.com) via the `@convex-dev/better-auth` Convex component. Auth routes are served from the Convex site deployment (`CONVEX_SITE_URL`).
+
+**First-time setup — create your admin account:**
+
+```bash
+curl -X POST http://<CONVEX_SITE_URL>/api/auth/sign-up/email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"yourpassword","name":"Admin"}'
+```
+
+**After creating your account, disable sign-up** so no further accounts can be registered. In `convex/auth.ts`, set `disableSignUp: true`:
+
+```ts
+emailAndPassword: {
+  enabled: true,
+  disableSignUp: true,   // add this after initial setup
+},
+```
+
+Then redeploy: `pnpm convex:dev` (or `pnpm convex:deploy` for production).
+
+To re-enable sign-up temporarily (e.g. to add another user), flip it back to `false`, deploy, create the account via the API, then set it back to `true` and redeploy.
+
 ### Agent Integration
 
 See [docs/agent-integration.md](docs/agent-integration.md) for the full integration guide, including a ready-to-use `ConvexLogger` wrapper class.

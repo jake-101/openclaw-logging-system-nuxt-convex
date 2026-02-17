@@ -5,7 +5,7 @@ import { Bar, Doughnut } from 'vue-chartjs'
 
 definePageMeta({ title: 'Rate Limits' })
 
-const hoursWindow = ref(24)
+const hoursWindow = ref(6)
 const { data: recentEvents } = useConvexQuery(api.rateLimits.listRecent, computed(() => ({
   limit: 200,
   hours: hoursWindow.value
@@ -79,9 +79,8 @@ const { bar: barOptions, doughnut: doughnutOptions } = useChartOptions()
 
 const windowOptions = [
   { label: 'Last 1h', value: 1 },
-  { label: 'Last 6h', value: 6 },
-  { label: 'Last 24h', value: 24 },
-  { label: 'Last 72h', value: 72 }
+  { label: 'Last 3h', value: 3 },
+  { label: 'Last 6h', value: 6 }
 ]
 
 // Alert threshold

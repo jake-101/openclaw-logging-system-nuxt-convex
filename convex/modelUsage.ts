@@ -1,6 +1,10 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 
+// Max records to aggregate in a single query to avoid Convex execution timeout.
+// With ~250 calls/hour, 2000 covers ~8 hours of data safely.
+const MAX_RECORDS = 2000
+
 export const create = mutation({
   args: {
     sessionKey: v.string(),
@@ -32,9 +36,9 @@ export const byModel = query({
 
     const usage = await ctx.db
       .query('modelUsage')
-      .withIndex('by_time')
-      .filter(q => q.gte(q.field('timestamp'), cutoff))
-      .collect()
+      .withIndex('by_time', q => q.gte('timestamp', cutoff))
+      .order('desc')
+      .take(MAX_RECORDS)
 
     const byModel: Record<string, {
       calls: number
@@ -76,9 +80,9 @@ export const byProvider = query({
 
     const usage = await ctx.db
       .query('modelUsage')
-      .withIndex('by_time')
-      .filter(q => q.gte(q.field('timestamp'), cutoff))
-      .collect()
+      .withIndex('by_time', q => q.gte('timestamp', cutoff))
+      .order('desc')
+      .take(MAX_RECORDS)
 
     const byProvider: Record<string, {
       calls: number
@@ -118,9 +122,9 @@ export const latencyStats = query({
 
     const usage = await ctx.db
       .query('modelUsage')
-      .withIndex('by_time')
-      .filter(q => q.gte(q.field('timestamp'), cutoff))
-      .collect()
+      .withIndex('by_time', q => q.gte('timestamp', cutoff))
+      .order('desc')
+      .take(MAX_RECORDS)
 
     const filtered = args.model
       ? usage.filter(u => u.model === args.model)
@@ -159,9 +163,9 @@ export const dailySummary = query({
 
     const usage = await ctx.db
       .query('modelUsage')
-      .withIndex('by_time')
-      .filter(q => q.gte(q.field('timestamp'), cutoff))
-      .collect()
+      .withIndex('by_time', q => q.gte('timestamp', cutoff))
+      .order('desc')
+      .take(MAX_RECORDS)
 
     const byDay: Record<string, {
       calls: number

@@ -126,15 +126,10 @@ export const describe = query({
       },
 
       authentication: {
-        description: 'Dashboard is protected by token-based auth. Agent API endpoints (logs, sessions, errors, etc.) do not require auth -- only the dashboard web UI does.',
-        mutations: {
-          'auth.register': 'Create a dashboard user. First user is open registration; subsequent users require an existing session token (existingToken arg).',
-          'auth.login': 'Authenticate with email + password. Returns { token, email }.',
-          'auth.logout': 'Invalidate a session token.'
-        },
+        description: 'Dashboard is protected by Better Auth (https://better-auth.com) via the @convex-dev/better-auth Convex component. Agent API endpoints (logs, sessions, errors, etc.) do not require auth -- only the dashboard web UI does.',
+        note: 'Auth is handled via HTTP endpoints on the Convex site deployment (*.convex.site/api/auth/*). Users are managed through Better Auth directly -- not via Convex mutations.',
         queries: {
-          'auth.validateSession': 'Check if a token is valid. Returns { email, expiresAt } or null.',
-          'auth.hasUsers': 'Returns true if any dashboard users exist (for first-user setup detection).'
+          'auth.getCurrentUser': 'Get the currently authenticated user from the Better Auth component. Returns user object or null.'
         }
       },
 

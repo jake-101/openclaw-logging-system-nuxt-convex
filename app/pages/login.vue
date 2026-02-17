@@ -1,44 +1,17 @@
 <script setup lang="ts">
 definePageMeta({ title: 'Login', layout: false })
 
-const { login, register, checkHasUsers } = useAuth()
+const { login } = useAuth()
 const toast = useToast()
 
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
-const checkingUsers = ref(true)
-const hasExistingUsers = ref(false)
-
-const isSetup = computed(() => !hasExistingUsers.value)
-const buttonLabel = computed(() => isSetup.value ? 'Create Account' : 'Sign In')
-const heading = computed(() => isSetup.value ? 'Set Up Dashboard' : 'Sign In')
-const description = computed(() =>
-  isSetup.value
-    ? 'Create your admin account to get started.'
-    : 'Sign in to access the dashboard.'
-)
-
-// Check if any users exist on mount
-onMounted(async () => {
-  try {
-    hasExistingUsers.value = await checkHasUsers()
-  } catch {
-    // Default to login mode if check fails
-    hasExistingUsers.value = true
-  } finally {
-    checkingUsers.value = false
-  }
-})
 
 async function handleSubmit() {
   if (!email.value || !password.value) {
     errorMessage.value = 'Email and password are required'
-    return
-  }
-  if (password.value.length < 8) {
-    errorMessage.value = 'Password must be at least 8 characters'
     return
   }
 
@@ -46,14 +19,9 @@ async function handleSubmit() {
   errorMessage.value = ''
 
   try {
-    if (isSetup.value) {
-      await register(email.value, password.value)
-    } else {
-      await login(email.value, password.value)
-    }
-
+    await login(email.value, password.value)
     toast.add({
-      title: isSetup.value ? 'Account created' : 'Signed in',
+      title: 'Signed in',
       description: `Welcome, ${email.value}`,
       color: 'success'
     })
@@ -88,30 +56,15 @@ async function handleSubmit() {
 
       <UCard>
         <template #header>
-          <div v-if="!checkingUsers">
-            <h2 class="text-lg font-semibold text-(--ui-text-highlighted)">
-              {{ heading }}
-            </h2>
-            <p class="mt-1 text-sm text-(--ui-text-muted)">
-              {{ description }}
-            </p>
-          </div>
+          <h2 class="text-lg font-semibold text-(--ui-text-highlighted)">
+            Sign In
+          </h2>
+          <p class="mt-1 text-sm text-(--ui-text-muted)">
+            Sign in to access the dashboard.
+          </p>
         </template>
 
-        <!-- Loading state while checking if users exist -->
-        <div
-          v-if="checkingUsers"
-          class="flex items-center justify-center py-8"
-        >
-          <UIcon
-            name="i-lucide-loader-2"
-            class="h-6 w-6 animate-spin text-(--ui-text-muted)"
-          />
-        </div>
-
-        <!-- Login / Setup form -->
         <form
-          v-else
           class="space-y-4"
           @submit.prevent="handleSubmit"
         >
@@ -134,14 +87,13 @@ async function handleSubmit() {
             name="password"
             label="Password"
             required
-            :description="isSetup ? 'Min 8 characters' : undefined"
           >
             <UInput
               v-model="password"
               type="password"
               placeholder="Enter password"
               icon="i-lucide-lock"
-              :autocomplete="isSetup ? 'new-password' : 'current-password'"
+              autocomplete="current-password"
               :disabled="loading"
             />
           </UFormField>
@@ -165,7 +117,7 @@ async function handleSubmit() {
             :disabled="loading"
             icon="i-lucide-log-in"
           >
-            {{ buttonLabel }}
+            Sign In
           </UButton>
         </form>
       </UCard>

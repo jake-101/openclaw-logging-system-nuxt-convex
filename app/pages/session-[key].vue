@@ -13,7 +13,7 @@ const { data: session } = useConvexQuery(api.sessions.get, computed(() => ({
 
 const { data: logs } = useConvexQuery(api.logs.list, computed(() => ({
   sessionKey: sessionKey.value,
-  limit: 500
+  limit: 200
 })))
 
 const { data: errors } = useConvexQuery(api.errors.bySession, computed(() => ({
