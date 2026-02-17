@@ -77,6 +77,32 @@ export const describe = query({
             context: { type: 'any', required: false, note: 'JSON blob with relevant context' },
             resolved: { type: 'boolean', required: false, note: 'Defaults to false' }
           }
+        },
+        'cronRuns.upsert': {
+          description: 'Record or update a cron job run. Idempotent on jobId+runId.',
+          args: {
+            jobId: { type: 'string', required: true, note: 'OpenClaw cron job identifier' },
+            runId: { type: 'string', required: true, note: 'Unique run identifier' },
+            jobName: { type: 'string', required: false, note: 'Human-readable job name' },
+            scheduledAt: { type: 'number', required: true, note: 'When the job was supposed to run (ms)' },
+            completedAt: { type: 'number', required: true, note: 'When the job actually finished (ms)' },
+            durationMs: { type: 'number', required: true, note: 'Execution time in ms' },
+            status: { type: 'string', required: true, note: '"ok" | "failed" | "timeout"' },
+            summary: { type: 'string', required: false, note: 'Brief description of what happened' },
+            sessionKey: { type: 'string', required: false, note: 'Link to agent session if applicable' },
+            error: { type: 'string', required: false, note: 'Error message if failed' }
+          }
+        },
+        'rateLimits.create': {
+          description: 'Record a rate limit event from an API provider.',
+          args: {
+            sessionKey: { type: 'string', required: true },
+            timestamp: { type: 'number', required: true },
+            provider: { type: 'string', required: true, note: '"anthropic" | "openai" | "openrouter" | etc' },
+            endpoint: { type: 'string', required: false, note: 'API endpoint that was rate limited' },
+            retryAfter: { type: 'number', required: false, note: 'Seconds until retry (from response header)' },
+            context: { type: 'any', required: false, note: 'Additional context about the request' }
+          }
         }
       },
 
@@ -87,6 +113,12 @@ export const describe = query({
         'sessions.get': 'Get a single session by sessionKey',
         'errors.unresolved': 'List all unresolved errors',
         'errors.bySession': 'List errors for a specific session',
+        'cronRuns.listRecent': 'List recent cron runs, optionally filtered by status',
+        'cronRuns.listByJob': 'List runs for a specific job ID',
+        'cronRuns.getJobStats': 'Get success/failure/duration stats for a job over N days',
+        'rateLimits.listRecent': 'List recent rate limit events within N hours',
+        'rateLimits.listByProvider': 'List rate limit events for a specific provider',
+        'rateLimits.getStats': 'Get rate limit stats (total, by provider, hourly rate) over N hours',
         'apiDocs.describe': 'This endpoint -- returns API documentation'
       }
     }

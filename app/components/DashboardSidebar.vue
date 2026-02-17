@@ -21,6 +21,16 @@ const navigation: NavigationMenuItem[][] = [[
     label: 'Errors',
     icon: 'i-lucide-alert-triangle',
     to: '/errors'
+  },
+  {
+    label: 'Cron Jobs',
+    icon: 'i-lucide-timer',
+    to: '/crons'
+  },
+  {
+    label: 'Rate Limits',
+    icon: 'i-lucide-shield-alert',
+    to: '/rate-limits'
   }
 ], [
   {

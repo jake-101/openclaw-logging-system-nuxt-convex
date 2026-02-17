@@ -9,8 +9,10 @@
  */
 
 import type * as apiDocs from "../apiDocs.js";
+import type * as cronRuns from "../cronRuns.js";
 import type * as errors from "../errors.js";
 import type * as logs from "../logs.js";
+import type * as rateLimits from "../rateLimits.js";
 import type * as sessions from "../sessions.js";
 
 import type {
@@ -21,8 +23,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   apiDocs: typeof apiDocs;
+  cronRuns: typeof cronRuns;
   errors: typeof errors;
   logs: typeof logs;
+  rateLimits: typeof rateLimits;
   sessions: typeof sessions;
 }>;
 

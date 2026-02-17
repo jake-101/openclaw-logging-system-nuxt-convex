@@ -8,6 +8,8 @@ const pageTitle = computed(() => {
   if (path === '/sessions') return 'Sessions'
   if (path === '/errors') return 'Errors'
   if (path === '/analytics') return 'Analytics'
+  if (path === '/crons') return 'Cron Jobs'
+  if (path === '/rate-limits') return 'Rate Limits'
   if (path.startsWith('/session-')) return 'Session Detail'
   return 'OpenClaw'
 })
@@ -19,6 +21,8 @@ const pageIcon = computed(() => {
   if (path === '/sessions') return 'i-lucide-activity'
   if (path === '/errors') return 'i-lucide-alert-triangle'
   if (path === '/analytics') return 'i-lucide-bar-chart-3'
+  if (path === '/crons') return 'i-lucide-timer'
+  if (path === '/rate-limits') return 'i-lucide-shield-alert'
   if (path.startsWith('/session-')) return 'i-lucide-activity'
   return undefined
 })

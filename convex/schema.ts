@@ -61,5 +61,34 @@ export default defineSchema({
     resolved: v.boolean()
   })
     .index('by_session', ['sessionKey', 'timestamp'])
-    .index('by_unresolved', ['resolved', 'timestamp'])
+    .index('by_unresolved', ['resolved', 'timestamp']),
+
+  // Cron job runs
+  cronRuns: defineTable({
+    jobId: v.string(),
+    runId: v.string(),
+    jobName: v.optional(v.string()),
+    scheduledAt: v.number(),
+    completedAt: v.number(),
+    durationMs: v.number(),
+    status: v.string(),
+    summary: v.optional(v.string()),
+    sessionKey: v.optional(v.string()),
+    error: v.optional(v.string())
+  })
+    .index('by_job', ['jobId', 'completedAt'])
+    .index('by_status', ['status', 'completedAt'])
+    .index('by_time', ['completedAt']),
+
+  // Rate limit events
+  rateLimits: defineTable({
+    sessionKey: v.string(),
+    timestamp: v.number(),
+    provider: v.string(),
+    endpoint: v.optional(v.string()),
+    retryAfter: v.optional(v.number()),
+    context: v.optional(v.any())
+  })
+    .index('by_provider', ['provider', 'timestamp'])
+    .index('by_time', ['timestamp'])
 })
