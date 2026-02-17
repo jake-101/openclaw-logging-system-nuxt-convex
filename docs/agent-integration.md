@@ -1,6 +1,6 @@
 # OpenClaw Agent Integration Guide
 
-Connect your OpenClaw agent (BadgerBot) to the logging dashboard.
+Connect your OpenClaw agent to the logging dashboard.
 
 ## Quick Start
 
@@ -184,13 +184,13 @@ export class ConvexLogger {
 ```typescript
 const logger = new ConvexLogger(
   process.env.CONVEX_URL!,
-  'badgerbot',
+  'my-agent',
   'main'
 )
 
 // Start
 const sessionKey = await logger.startSession()
-await logger.info('BadgerBot session started', { channel: 'discord' })
+await logger.info('Agent session started', { channel: 'discord' })
 
 // During operation
 await logger.info('Received message from user', {
@@ -231,8 +231,8 @@ await logger.endSession({ totalTokens: 42000, estimatedCost: 0.08 })
 Format: `{agentId}-{YYYY-MM-DD}-{short-id}`
 
 Examples:
-- `badgerbot-2026-02-16-a3f2dd`
-- `badgerbot-2026-02-16-x8k2p1`
+- `my-agent-2026-02-16-a3f2dd`
+- `my-agent-2026-02-16-x8k2p1`
 
 The session key links logs to sessions. Use one key per logical work
 session. If the agent restarts, generate a new key.

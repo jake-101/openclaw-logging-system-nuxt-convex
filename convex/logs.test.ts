@@ -31,7 +31,7 @@ const sampleLogs: LogEntry[] = [
   {
     _id: '1',
     message: 'Starting session initialization',
-    agentId: 'badgerbot',
+    agentId: 'openclaw',
     level: 'info',
     sessionKey: 'session-001',
     timestamp: 1000
@@ -39,7 +39,7 @@ const sampleLogs: LogEntry[] = [
   {
     _id: '2',
     message: 'Tool execution failed: readFile',
-    agentId: 'badgerbot',
+    agentId: 'openclaw',
     toolName: 'readFile',
     level: 'error',
     sessionKey: 'session-001',
@@ -56,7 +56,7 @@ const sampleLogs: LogEntry[] = [
   {
     _id: '4',
     message: 'Processing complete',
-    agentId: 'badgerbot',
+    agentId: 'openclaw',
     toolName: 'writeFile',
     level: 'info',
     sessionKey: 'session-001',
@@ -84,7 +84,7 @@ describe('log search filtering', () => {
   })
 
   it('is case-insensitive', () => {
-    const results = filterLogs(sampleLogs, 'BADGERBOT')
+    const results = filterLogs(sampleLogs, 'OPENCLAW')
     expect(results).toHaveLength(3)
   })
 

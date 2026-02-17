@@ -15,8 +15,8 @@ export const describe = query({
 
       conventions: {
         timestamps: 'Unix milliseconds (Date.now())',
-        sessionKey: 'Unique string per agent session. Recommended format: "{agentId}-{ISO date}-{short-uuid}" e.g. "badgerbot-2026-02-16-a3f2dd"',
-        agentId: 'Stable identifier for the agent instance, e.g. "badgerbot"',
+        sessionKey: 'Unique string per agent session. Recommended format: "{agentId}-{ISO date}-{short-uuid}" e.g. "openclaw-2026-02-16-a3f2dd"',
+        agentId: 'Stable identifier for the agent instance, e.g. "openclaw"',
         logLevels: {
           debug: 'Verbose internals -- tool args, prompt fragments, decision traces. Off by default in dashboard.',
           info: 'Normal operations -- session start/end, task completed, message sent.',

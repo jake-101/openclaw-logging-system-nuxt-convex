@@ -1,6 +1,6 @@
 # AGENTS.md - OpenClaw Logging System
 
-Agent logging and monitoring dashboard for OpenClaw agents (BadgerBot).
+Agent logging and monitoring dashboard for OpenClaw agents.
 Nuxt 4 frontend with Convex real-time backend.
 
 ## Tech Stack

@@ -65,7 +65,7 @@ describe('session upsert - insert (new session)', () => {
   it('creates session with default zero stats', () => {
     const payload = buildInsertPayload({
       sessionKey: 'test-session',
-      agentId: 'badgerbot',
+      agentId: 'openclaw',
       kind: 'main'
     }, now)
 
@@ -79,7 +79,7 @@ describe('session upsert - insert (new session)', () => {
   it('uses provided stats when given', () => {
     const payload = buildInsertPayload({
       sessionKey: 'test-session',
-      agentId: 'badgerbot',
+      agentId: 'openclaw',
       kind: 'main',
       messageCount: 5,
       toolCalls: 3,
@@ -98,7 +98,7 @@ describe('session upsert - insert (new session)', () => {
   it('leaves optional fields undefined when not provided', () => {
     const payload = buildInsertPayload({
       sessionKey: 'test-session',
-      agentId: 'badgerbot',
+      agentId: 'openclaw',
       kind: 'main'
     }, now)
 
@@ -114,7 +114,7 @@ describe('session upsert - patch (existing session)', () => {
     sessionKey: 'test-session',
     startedAt: 1699999990000,
     lastActiveAt: 1699999995000,
-    agentId: 'badgerbot',
+    agentId: 'openclaw',
     kind: 'main',
     messageCount: 10,
     toolCalls: 5,
@@ -126,7 +126,7 @@ describe('session upsert - patch (existing session)', () => {
   it('updates lastActiveAt to now', () => {
     const patch = buildPatchPayload({
       sessionKey: 'test-session',
-      agentId: 'badgerbot',
+      agentId: 'openclaw',
       kind: 'main'
     }, existing, now)
 
@@ -136,7 +136,7 @@ describe('session upsert - patch (existing session)', () => {
   it('keeps existing stats when args not provided', () => {
     const patch = buildPatchPayload({
       sessionKey: 'test-session',
-      agentId: 'badgerbot',
+      agentId: 'openclaw',
       kind: 'main'
     }, existing, now)
 
@@ -150,7 +150,7 @@ describe('session upsert - patch (existing session)', () => {
   it('overrides stats when args provided', () => {
     const patch = buildPatchPayload({
       sessionKey: 'test-session',
-      agentId: 'badgerbot',
+      agentId: 'openclaw',
       kind: 'main',
       messageCount: 20,
       toolCalls: 12,
@@ -169,7 +169,7 @@ describe('session upsert - patch (existing session)', () => {
   it('handles partial updates correctly', () => {
     const patch = buildPatchPayload({
       sessionKey: 'test-session',
-      agentId: 'badgerbot',
+      agentId: 'openclaw',
       kind: 'main',
       messageCount: 15
       // only updating messageCount

@@ -1,6 +1,8 @@
 # OpenClaw Logging System
 
-Real-time agent logging and monitoring dashboard for OpenClaw agents (BadgerBot). Built with Nuxt 4 and Convex.
+Real-time agent logging and monitoring dashboard for OpenClaw. Built with Nuxt 4 and Convex.
+
+![OpenClaw Logging Dashboard](docs/openclaw-logging-screenshot.jpg)
 
 ## Features
 
@@ -24,63 +26,29 @@ Real-time agent logging and monitoring dashboard for OpenClaw agents (BadgerBot)
 
 ## Quick Start
 
+```bash
+git clone https://github.com/jake-101/openclaw-logging-system-nuxt-convex.git
+cd openclaw-logging-system-nuxt-convex
+pnpm install
+cp .env.example .env
+# Edit .env with your Convex URLs (see setup guide)
+```
+
+For the full end-to-end setup (Convex deployment, auth, sync scripts), see the **[Setup Guide](docs/setup-guide.md)**.
+
 ### Prerequisites
 
 - Node.js 20+
 - pnpm 10+
-- A Convex deployment (cloud or [self-hosted](https://github.com/get-convex/convex-backend))
+- A Convex deployment ([self-hosted](https://github.com/get-convex/convex-backend) or [cloud](https://dashboard.convex.dev))
 
-### Setup
+## Documentation
 
-```bash
-# Clone the repo
-git clone https://github.com/your-username/openclaw-logging-system.git
-cd openclaw-logging-system
-
-# Install dependencies
-pnpm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Convex URL and admin key
-
-# Start Convex dev server (watches convex/ for changes)
-pnpm convex:dev
-
-# Start Nuxt dev server
-pnpm dev
-```
-
-The dashboard will be available at `http://localhost:3000`.
-
-### Authentication
-
-The dashboard uses [Better Auth](https://better-auth.com) via the `@convex-dev/better-auth` Convex component. Auth routes are served from the Convex site deployment (`CONVEX_SITE_URL`).
-
-**First-time setup — create your admin account:**
-
-```bash
-curl -X POST http://<CONVEX_SITE_URL>/api/auth/sign-up/email \
-  -H "Content-Type: application/json" \
-  -d '{"email":"you@example.com","password":"yourpassword","name":"Admin"}'
-```
-
-**After creating your account, disable sign-up** so no further accounts can be registered. In `convex/auth.ts`, set `disableSignUp: true`:
-
-```ts
-emailAndPassword: {
-  enabled: true,
-  disableSignUp: true,   // add this after initial setup
-},
-```
-
-Then redeploy: `pnpm convex:dev` (or `pnpm convex:deploy` for production).
-
-To re-enable sign-up temporarily (e.g. to add another user), flip it back to `false`, deploy, create the account via the API, then set it back to `true` and redeploy.
-
-### Agent Integration
-
-See [docs/agent-integration.md](docs/agent-integration.md) for the full integration guide, including a ready-to-use `ConvexLogger` wrapper class.
+| Doc | Description |
+|-----|-------------|
+| **[Setup Guide](docs/setup-guide.md)** | End-to-end setup from Convex deployment to first sync |
+| **[Agent Integration](docs/agent-integration.md)** | TypeScript/JS `ConvexLogger` wrapper for direct logging |
+| **[Agent Scripts](agent-scripts/README.md)** | Python sync scripts for OpenClaw session data |
 
 ## Scripts
 
@@ -103,11 +71,11 @@ See [docs/agent-integration.md](docs/agent-integration.md) for the full integrat
 app/                      # Nuxt 4 frontend
   components/             # Auto-imported Vue components
   composables/            # Shared composables (charts, navigation)
-  pages/                  # File-based routing (9 pages)
+  pages/                  # File-based routing
   plugins/                # Chart.js registration, Convex client
   utils/                  # Formatting helpers, color constants
 convex/                   # Convex backend
-  schema.ts               # Database schema (6 tables)
+  schema.ts               # Database schema
   logs.ts                 # Log CRUD
   sessions.ts             # Session management
   errors.ts               # Error tracking
@@ -115,12 +83,13 @@ convex/                   # Convex backend
   rateLimits.ts           # Rate limit events
   modelUsage.ts           # Model API call tracking
   apiDocs.ts              # Self-documenting API endpoint
-docs/                     # Integration documentation
+agent-scripts/            # Python sync scripts for OpenClaw
+docs/                     # Setup and integration guides
 ```
 
 ## Database Schema
 
-Six tables: `logs`, `sessions`, `errors`, `cronRuns`, `rateLimits`, `modelUsage`.
+Six core tables: `logs`, `sessions`, `errors`, `cronRuns`, `rateLimits`, `modelUsage`. Plus two aggregation tables: `logCounters`, `dailyStats`.
 
 All timestamps are Unix milliseconds. Session keys (format: `{agentId}-{date}-{shortId}`) link logs to sessions.
 
