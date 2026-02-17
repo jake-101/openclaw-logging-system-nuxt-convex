@@ -2,32 +2,8 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js'
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+definePageMeta({ title: 'Analytics' })
 
 const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 100 })
 const { data: logs } = useConvexQuery(api.logs.list, { limit: 500 })
@@ -152,92 +128,31 @@ const totalToolCalls = computed(() => {
   return sessions.value.reduce((sum, s) => sum + s.toolCalls, 0)
 })
 
-const lineOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: { callback: (value: string | number) => `$${value}` }
-    }
-  }
-}
-
-const barOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    y: { beginAtZero: true }
-  }
-}
-
-const doughnutOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { position: 'bottom' as const }
-  }
-}
+const { line: lineOptions, bar: barOptions, doughnut: doughnutOptions } = useChartOptions()
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
     <!-- Summary Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-dollar-sign"
-            class="size-8 text-green-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              ${{ totalCost.toFixed(4) }}
-            </p>
-            <p class="text-sm text-muted">
-              Total Cost
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-hash"
-            class="size-8 text-blue-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ totalTokens.toLocaleString() }}
-            </p>
-            <p class="text-sm text-muted">
-              Total Tokens
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-wrench"
-            class="size-8 text-purple-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ totalToolCalls.toLocaleString() }}
-            </p>
-            <p class="text-sm text-muted">
-              Total Tool Calls
-            </p>
-          </div>
-        </div>
-      </UCard>
+      <StatCard
+        :value="`$${totalCost.toFixed(4)}`"
+        label="Total Cost"
+        icon="i-lucide-dollar-sign"
+        icon-class="text-green-500"
+      />
+      <StatCard
+        :value="totalTokens.toLocaleString()"
+        label="Total Tokens"
+        icon="i-lucide-hash"
+        icon-class="text-blue-500"
+      />
+      <StatCard
+        :value="totalToolCalls.toLocaleString()"
+        label="Total Tool Calls"
+        icon="i-lucide-wrench"
+        icon-class="text-purple-500"
+      />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

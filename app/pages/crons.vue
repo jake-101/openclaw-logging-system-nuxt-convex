@@ -2,17 +2,8 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 import { Bar } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+definePageMeta({ title: 'Cron Jobs' })
 
 const statusFilter = ref('all')
 const { data: recentRuns } = useConvexQuery(api.cronRuns.listRecent, computed(() => {
@@ -82,19 +73,7 @@ const durationChartData = computed(() => {
   }
 })
 
-const barOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: { callback: (value: string | number) => `${value}ms` }
-    }
-  }
-}
+const { durationBar: barOptions } = useChartOptions()
 
 const statusOptions = [
   { label: 'All Statuses', value: 'all' },
@@ -102,33 +81,6 @@ const statusOptions = [
   { label: 'Failed', value: 'failed' },
   { label: 'Timeout', value: 'timeout' }
 ]
-
-const statusColors: Record<string, 'success' | 'error' | 'warning' | 'neutral'> = {
-  ok: 'success',
-  failed: 'error',
-  timeout: 'warning'
-}
-
-function formatTimestamp(ts: number): string {
-  return new Date(ts).toLocaleString()
-}
-
-function formatRelativeTime(ts: number): string {
-  const diff = Date.now() - ts
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-  if (days > 0) return `${days}d ago`
-  if (hours > 0) return `${hours}h ago`
-  if (minutes > 0) return `${minutes}m ago`
-  return 'just now'
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
-  return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`
-}
 
 // Expanded job detail
 const expandedJobId = ref<string | null>(null)
@@ -141,57 +93,25 @@ function toggleJob(jobId: string) {
   <div class="flex flex-col gap-6">
     <!-- Summary Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-check-circle"
-            class="size-8 text-green-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ okRuns }}
-            </p>
-            <p class="text-sm text-muted">
-              Successful Runs
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-x-circle"
-            :class="['size-8', failedRuns > 0 ? 'text-red-500' : 'text-muted']"
-          />
-          <div>
-            <p
-              class="text-2xl font-bold"
-              :class="failedRuns > 0 ? 'text-red-500' : 'text-highlighted'"
-            >
-              {{ failedRuns }}
-            </p>
-            <p class="text-sm text-muted">
-              Failed Runs
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-clock"
-            class="size-8 text-blue-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ totalRuns }}
-            </p>
-            <p class="text-sm text-muted">
-              Total Runs
-            </p>
-          </div>
-        </div>
-      </UCard>
+      <StatCard
+        :value="okRuns"
+        label="Successful Runs"
+        icon="i-lucide-check-circle"
+        icon-class="text-green-500"
+      />
+      <StatCard
+        :value="failedRuns"
+        label="Failed Runs"
+        icon="i-lucide-x-circle"
+        :icon-class="failedRuns > 0 ? 'text-red-500' : 'text-muted'"
+        :value-class="failedRuns > 0 ? 'text-red-500' : 'text-highlighted'"
+      />
+      <StatCard
+        :value="totalRuns"
+        label="Total Runs"
+        icon="i-lucide-clock"
+        icon-class="text-blue-500"
+      />
     </div>
 
     <!-- Duration Chart -->
@@ -231,21 +151,12 @@ function toggleJob(jobId: string) {
         Jobs
       </h3>
 
-      <div
+      <EmptyState
         v-if="!jobs.length && recentRuns"
-        class="flex flex-col items-center justify-center py-16"
-      >
-        <UIcon
-          name="i-lucide-timer"
-          class="size-12 text-muted mb-3"
-        />
-        <p class="text-muted">
-          No cron jobs recorded yet.
-        </p>
-        <p class="text-sm text-muted">
-          Jobs will appear here once OpenClaw starts reporting.
-        </p>
-      </div>
+        icon="i-lucide-timer"
+        title="No cron jobs recorded yet."
+        description="Jobs will appear here once OpenClaw starts reporting."
+      />
 
       <UCard
         v-for="job in jobs"
@@ -304,16 +215,16 @@ function toggleJob(jobId: string) {
             >
               <UBadge
                 :label="run.status"
-                :color="statusColors[run.status] || 'neutral'"
+                :color="STATUS_COLORS[run.status] || 'neutral'"
                 variant="subtle"
                 size="xs"
                 class="w-16 justify-center"
               />
               <span class="text-xs text-muted shrink-0">
-                {{ formatTimestamp(run.completedAt) }}
+                {{ formatFullTimestamp(run.completedAt) }}
               </span>
               <span class="text-xs font-mono text-muted shrink-0">
-                {{ formatDuration(run.durationMs) }}
+                {{ formatDurationMs(run.durationMs) }}
               </span>
               <span
                 v-if="run.summary"

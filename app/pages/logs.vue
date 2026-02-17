@@ -2,6 +2,8 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 
+definePageMeta({ title: 'Logs' })
+
 const levelFilter = ref('all')
 const sessionFilter = ref('')
 const searchInput = ref('')
@@ -54,12 +56,6 @@ const activeLogs = computed(() => {
   return listLogs.value
 })
 
-// Logs come desc from Convex — newest first (no reverse)
-const sortedLogs = computed(() => {
-  if (!activeLogs.value) return []
-  return activeLogs.value
-})
-
 const levelOptions = [
   { label: 'All Levels', value: 'all' },
   { label: 'Debug', value: 'debug' },
@@ -67,21 +63,6 @@ const levelOptions = [
   { label: 'Warn', value: 'warn' },
   { label: 'Error', value: 'error' }
 ]
-
-const levelColors: Record<string, 'neutral' | 'primary' | 'warning' | 'error'> = {
-  debug: 'neutral',
-  info: 'primary',
-  warn: 'warning',
-  error: 'error'
-}
-
-function formatTimestamp(ts: number): string {
-  return new Date(ts).toLocaleTimeString()
-}
-
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString()
-}
 
 // All possible columns
 const allColumns = [
@@ -169,7 +150,7 @@ const visibleColumns = computed(() =>
         </UPopover>
 
         <UBadge
-          :label="`${sortedLogs.length} entries`"
+          :label="`${activeLogs?.length ?? 0} entries`"
           variant="subtle"
           color="neutral"
         />
@@ -179,7 +160,7 @@ const visibleColumns = computed(() =>
     <!-- Log Table -->
     <div class="flex-1 overflow-auto min-h-0">
       <UTable
-        :data="sortedLogs"
+        :data="activeLogs ?? []"
         :columns="visibleColumns"
         :loading="!activeLogs"
         class="w-full"
@@ -194,7 +175,7 @@ const visibleColumns = computed(() =>
         <template #level-cell="{ row }">
           <UBadge
             :label="row.original.level"
-            :color="levelColors[row.original.level] || 'neutral'"
+            :color="LOG_LEVEL_COLORS[row.original.level] || 'neutral'"
             variant="subtle"
             size="xs"
             class="w-14 justify-center"
@@ -283,21 +264,12 @@ const visibleColumns = computed(() =>
         </template>
       </UTable>
 
-      <div
-        v-if="sortedLogs.length === 0 && activeLogs"
-        class="flex flex-col items-center justify-center py-16"
-      >
-        <UIcon
-          name="i-lucide-scroll-text"
-          class="size-12 text-muted mb-3"
-        />
-        <p class="text-muted">
-          {{ isSearching ? 'No logs match your search.' : 'No log entries found.' }}
-        </p>
-        <p class="text-sm text-muted">
-          {{ isSearching ? 'Try a different search term.' : 'Start an agent session to see activity here.' }}
-        </p>
-      </div>
+      <EmptyState
+        v-if="activeLogs && activeLogs.length === 0"
+        icon="i-lucide-scroll-text"
+        :title="isSearching ? 'No logs match your search.' : 'No log entries found.'"
+        :description="isSearching ? 'Try a different search term.' : 'Start an agent session to see activity here.'"
+      />
     </div>
   </div>
 </template>

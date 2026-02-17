@@ -2,6 +2,8 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 
+definePageMeta({ title: 'Session Detail' })
+
 const route = useRoute()
 const sessionKey = computed(() => route.params.key as string)
 
@@ -22,36 +24,6 @@ const sortedLogs = computed(() => {
   if (!logs.value) return []
   return [...logs.value].reverse()
 })
-
-function formatTimestamp(ts: number): string {
-  return new Date(ts).toLocaleTimeString()
-}
-
-function formatFullTimestamp(ts: number): string {
-  return new Date(ts).toLocaleString()
-}
-
-function formatDuration(start: number, end: number): string {
-  const diff = end - start
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  if (hours > 0) return `${hours}h ${minutes % 60}m`
-  if (minutes > 0) return `${minutes}m ${seconds % 60}s`
-  return `${seconds}s`
-}
-
-function formatCost(cost: number | undefined): string {
-  if (cost === undefined || cost === null) return '—'
-  return `$${cost.toFixed(4)}`
-}
-
-const levelColors: Record<string, 'neutral' | 'primary' | 'warning' | 'error'> = {
-  debug: 'neutral',
-  info: 'primary',
-  warn: 'warning',
-  error: 'error'
-}
 </script>
 
 <template>
@@ -230,7 +202,7 @@ const levelColors: Record<string, 'neutral' | 'primary' | 'warning' | 'error'> =
           </span>
           <UBadge
             :label="log.level"
-            :color="levelColors[log.level] || 'neutral'"
+            :color="LOG_LEVEL_COLORS[log.level] || 'neutral'"
             variant="subtle"
             size="xs"
             class="w-14 justify-center shrink-0 mt-0.5"
@@ -248,18 +220,11 @@ const levelColors: Record<string, 'neutral' | 'primary' | 'warning' | 'error'> =
         </div>
       </div>
 
-      <div
+      <EmptyState
         v-else-if="logs"
-        class="flex flex-col items-center justify-center py-12"
-      >
-        <UIcon
-          name="i-lucide-scroll-text"
-          class="size-10 text-muted mb-2"
-        />
-        <p class="text-muted text-sm">
-          No logs for this session yet.
-        </p>
-      </div>
+        icon="i-lucide-scroll-text"
+        title="No logs for this session yet."
+      />
     </UCard>
   </div>
 </template>

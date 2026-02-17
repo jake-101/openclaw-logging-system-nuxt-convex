@@ -2,6 +2,8 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 
+definePageMeta({ title: 'Dashboard' })
+
 const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 50 })
 const { data: recentLogs } = useConvexQuery(api.logs.list, { limit: 10 })
 const { data: unresolvedErrors } = useConvexQuery(api.errors.unresolved, {})
@@ -12,8 +14,7 @@ const recentLogCount = computed(() => recentLogs.value?.length ?? 0)
 
 const activeSessions = computed(() => {
   if (!sessions.value) return 0
-  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
-  return sessions.value.filter(s => s.lastActiveAt > fiveMinutesAgo).length
+  return sessions.value.filter(s => isSessionActive(s.lastActiveAt)).length
 })
 
 const stats = computed(() => [
@@ -42,42 +43,20 @@ const stats = computed(() => [
     color: 'text-muted' as const
   }
 ])
-
-function formatTimestamp(ts: number): string {
-  return new Date(ts).toLocaleString()
-}
-
-const levelColors: Record<string, 'neutral' | 'primary' | 'warning' | 'error'> = {
-  debug: 'neutral',
-  info: 'primary',
-  warn: 'warning',
-  error: 'error'
-}
 </script>
 
 <template>
   <div class="space-y-6">
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <UCard
+      <StatCard
         v-for="stat in stats"
         :key="stat.label"
-      >
-        <div class="flex items-center gap-3">
-          <UIcon
-            :name="stat.icon"
-            :class="['size-8', stat.color]"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ stat.value }}
-            </p>
-            <p class="text-sm text-muted">
-              {{ stat.label }}
-            </p>
-          </div>
-        </div>
-      </UCard>
+        :value="stat.value"
+        :label="stat.label"
+        :icon="stat.icon"
+        :icon-class="stat.color"
+      />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -109,13 +88,13 @@ const levelColors: Record<string, 'neutral' | 'primary' | 'warning' | 'error'> =
           >
             <UBadge
               :label="log.level"
-              :color="levelColors[log.level] || 'neutral'"
+              :color="LOG_LEVEL_COLORS[log.level] || 'neutral'"
               variant="subtle"
               size="xs"
               class="mt-0.5 shrink-0 w-14 justify-center"
             />
             <span class="text-muted shrink-0 text-xs mt-0.5">
-              {{ formatTimestamp(log.timestamp) }}
+              {{ formatFullTimestamp(log.timestamp) }}
             </span>
             <span class="text-highlighted truncate">
               {{ log.message }}

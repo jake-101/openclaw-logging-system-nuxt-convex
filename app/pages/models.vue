@@ -2,24 +2,8 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js'
 
-ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement,
-  BarElement, ArcElement, Title, Tooltip, Legend, Filler
-)
+definePageMeta({ title: 'Model Usage' })
 
 const hoursWindow = ref(24)
 const daysWindow = ref(7)
@@ -160,30 +144,7 @@ const windowOptions = [
   { label: 'Last 7d', value: 168 }
 ]
 
-const barOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: { y: { beginAtZero: true } }
-}
-
-const costBarOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: { callback: (value: string | number) => `$${value}` }
-    }
-  }
-}
-
-const doughnutOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { position: 'right' as const } }
-}
+const { bar: barOptions, costBar: costBarOptions, doughnutRight: doughnutOptions } = useChartOptions()
 
 const dailyLineOptions = {
   responsive: true,
@@ -212,70 +173,30 @@ const dailyLineOptions = {
   <div class="flex flex-col gap-6">
     <!-- Summary Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-message-square"
-            class="size-8 text-blue-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ totalCalls.toLocaleString() }}
-            </p>
-            <p class="text-sm text-muted">
-              API Calls
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-hash"
-            class="size-8 text-purple-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ totalTokens.toLocaleString() }}
-            </p>
-            <p class="text-sm text-muted">
-              Total Tokens
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-dollar-sign"
-            class="size-8 text-green-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              ${{ totalCost.toFixed(4) }}
-            </p>
-            <p class="text-sm text-muted">
-              Total Cost
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-gauge"
-            class="size-8 text-yellow-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ latencyStats?.p50 ? `${latencyStats.p50}ms` : '—' }}
-            </p>
-            <p class="text-sm text-muted">
-              p50 Latency
-            </p>
-          </div>
-        </div>
-      </UCard>
+      <StatCard
+        :value="totalCalls.toLocaleString()"
+        label="API Calls"
+        icon="i-lucide-message-square"
+        icon-class="text-blue-500"
+      />
+      <StatCard
+        :value="totalTokens.toLocaleString()"
+        label="Total Tokens"
+        icon="i-lucide-hash"
+        icon-class="text-purple-500"
+      />
+      <StatCard
+        :value="`$${totalCost.toFixed(4)}`"
+        label="Total Cost"
+        icon="i-lucide-dollar-sign"
+        icon-class="text-green-500"
+      />
+      <StatCard
+        :value="latencyStats?.p50 ? `${latencyStats.p50}ms` : '—'"
+        label="p50 Latency"
+        icon="i-lucide-gauge"
+        icon-class="text-yellow-500"
+      />
     </div>
 
     <!-- Time window -->

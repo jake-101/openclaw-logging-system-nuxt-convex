@@ -2,30 +2,9 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 
+definePageMeta({ title: 'Sessions' })
+
 const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 100 })
-
-function formatTimestamp(ts: number): string {
-  return new Date(ts).toLocaleString()
-}
-
-function formatDuration(start: number, end: number): string {
-  const diff = end - start
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  if (hours > 0) return `${hours}h ${minutes % 60}m`
-  if (minutes > 0) return `${minutes}m ${seconds % 60}s`
-  return `${seconds}s`
-}
-
-function formatCost(cost: number | undefined): string {
-  if (cost === undefined || cost === null) return '—'
-  return `$${cost.toFixed(4)}`
-}
-
-function isActive(lastActiveAt: number): boolean {
-  return Date.now() - lastActiveAt < 5 * 60 * 1000
-}
 
 const columns = [
   { accessorKey: 'sessionKey', header: 'Session' },
@@ -60,7 +39,7 @@ const columns = [
         <div class="flex items-center gap-2">
           <span
             class="size-2 rounded-full shrink-0"
-            :class="isActive(row.original.lastActiveAt) ? 'bg-green-500' : 'bg-neutral-300 dark:bg-neutral-600'"
+            :class="isSessionActive(row.original.lastActiveAt) ? 'bg-green-500' : 'bg-neutral-300 dark:bg-neutral-600'"
           />
           <NuxtLink
             :to="`/session-${row.original.sessionKey}`"
@@ -112,7 +91,7 @@ const columns = [
 
       <template #lastActiveAt-cell="{ row }">
         <div class="flex flex-col text-xs">
-          <span class="text-highlighted">{{ formatTimestamp(row.original.lastActiveAt) }}</span>
+          <span class="text-highlighted">{{ formatFullTimestamp(row.original.lastActiveAt) }}</span>
           <span class="text-muted">
             {{ formatDuration(row.original.startedAt, row.original.lastActiveAt) }} duration
           </span>
@@ -120,20 +99,11 @@ const columns = [
       </template>
     </UTable>
 
-    <div
+    <EmptyState
       v-if="sessions && sessions.length === 0"
-      class="flex flex-col items-center justify-center py-16"
-    >
-      <UIcon
-        name="i-lucide-activity"
-        class="size-12 text-muted mb-3"
-      />
-      <p class="text-muted">
-        No sessions found.
-      </p>
-      <p class="text-sm text-muted">
-        Start an agent session to see it here.
-      </p>
-    </div>
+      icon="i-lucide-activity"
+      title="No sessions found."
+      description="Start an agent session to see it here."
+    />
   </div>
 </template>

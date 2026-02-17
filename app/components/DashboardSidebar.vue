@@ -1,49 +1,5 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
-
-const navigation: NavigationMenuItem[][] = [[
-  {
-    label: 'Dashboard',
-    icon: 'i-lucide-layout-dashboard',
-    to: '/'
-  },
-  {
-    label: 'Logs',
-    icon: 'i-lucide-scroll-text',
-    to: '/logs'
-  },
-  {
-    label: 'Sessions',
-    icon: 'i-lucide-activity',
-    to: '/sessions'
-  },
-  {
-    label: 'Errors',
-    icon: 'i-lucide-alert-triangle',
-    to: '/errors'
-  },
-  {
-    label: 'Cron Jobs',
-    icon: 'i-lucide-timer',
-    to: '/crons'
-  },
-  {
-    label: 'Rate Limits',
-    icon: 'i-lucide-shield-alert',
-    to: '/rate-limits'
-  },
-  {
-    label: 'Models',
-    icon: 'i-lucide-cpu',
-    to: '/models'
-  }
-], [
-  {
-    label: 'Analytics',
-    icon: 'i-lucide-bar-chart-3',
-    to: '/analytics'
-  }
-]]
+const { sidebarGroups } = useNavigation()
 </script>
 
 <template>
@@ -69,13 +25,13 @@ const navigation: NavigationMenuItem[][] = [[
     <template #default="{ collapsed }">
       <UNavigationMenu
         :collapsed="collapsed"
-        :items="navigation[0]"
+        :items="sidebarGroups[0]"
         orientation="vertical"
       />
 
       <UNavigationMenu
         :collapsed="collapsed"
-        :items="navigation[1]"
+        :items="sidebarGroups[1]"
         orientation="vertical"
         class="mt-auto"
       />

@@ -3,6 +3,8 @@ import { useConvexQuery, useConvexMutation } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 import type { Id } from '#convex/_generated/dataModel'
 
+definePageMeta({ title: 'Errors' })
+
 const { data: unresolvedErrors } = useConvexQuery(api.errors.unresolved, {})
 
 const { mutate: markResolved, isLoading: isResolving } = useConvexMutation(api.errors.markResolved)
@@ -43,21 +45,6 @@ async function handleResolve(id: Id<'errors'>) {
     })
   }
 }
-
-function formatTimestamp(ts: number): string {
-  return new Date(ts).toLocaleString()
-}
-
-function formatRelativeTime(ts: number): string {
-  const diff = Date.now() - ts
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-  if (days > 0) return `${days}d ago`
-  if (hours > 0) return `${hours}h ago`
-  if (minutes > 0) return `${minutes}m ago`
-  return 'just now'
-}
 </script>
 
 <template>
@@ -81,21 +68,13 @@ function formatRelativeTime(ts: number): string {
     </div>
 
     <!-- Empty state -->
-    <div
+    <EmptyState
       v-if="unresolvedErrors && unresolvedErrors.length === 0"
-      class="flex flex-col items-center justify-center py-16"
-    >
-      <UIcon
-        name="i-lucide-check-circle"
-        class="size-12 text-green-500 mb-3"
-      />
-      <p class="text-highlighted font-medium">
-        No unresolved errors
-      </p>
-      <p class="text-sm text-muted">
-        All errors have been resolved. Nice work!
-      </p>
-    </div>
+      icon="i-lucide-check-circle"
+      icon-class="text-green-500"
+      title="No unresolved errors"
+      description="All errors have been resolved. Nice work!"
+    />
 
     <!-- Grouped errors -->
     <div
@@ -141,7 +120,7 @@ function formatRelativeTime(ts: number): string {
                   {{ error.message }}
                 </p>
                 <div class="flex items-center gap-3 text-xs text-muted">
-                  <span>{{ formatTimestamp(error.timestamp) }}</span>
+                  <span>{{ formatFullTimestamp(error.timestamp) }}</span>
                   <NuxtLink
                     :to="`/session-${error.sessionKey}`"
                     class="font-mono text-primary hover:underline"

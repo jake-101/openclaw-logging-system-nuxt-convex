@@ -2,18 +2,8 @@
 import { useConvexQuery } from '@convex-vue/core'
 import { api } from '#convex/_generated/api'
 import { Bar, Doughnut } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
+definePageMeta({ title: 'Rate Limits' })
 
 const hoursWindow = ref(24)
 const { data: recentEvents } = useConvexQuery(api.rateLimits.listRecent, computed(() => ({
@@ -85,24 +75,7 @@ const hourlyChartData = computed(() => {
   }
 })
 
-const barOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    y: { beginAtZero: true }
-  }
-}
-
-const doughnutOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { position: 'bottom' as const }
-  }
-}
+const { bar: barOptions, doughnut: doughnutOptions } = useChartOptions()
 
 const windowOptions = [
   { label: 'Last 1h', value: 1 },
@@ -110,15 +83,6 @@ const windowOptions = [
   { label: 'Last 24h', value: 24 },
   { label: 'Last 72h', value: 72 }
 ]
-
-function formatRelativeTime(ts: number): string {
-  const diff = Date.now() - ts
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(minutes / 60)
-  if (hours > 0) return `${hours}h ago`
-  if (minutes > 0) return `${minutes}m ago`
-  return 'just now'
-}
 
 // Alert threshold
 const alertThreshold = 10
@@ -138,57 +102,25 @@ const isHighRate = computed(() => (stats.value?.hourlyRate ?? 0) >= alertThresho
 
     <!-- Summary Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-shield-alert"
-            :class="['size-8', (stats?.total ?? 0) > 0 ? 'text-red-500' : 'text-muted']"
-          />
-          <div>
-            <p
-              class="text-2xl font-bold"
-              :class="(stats?.total ?? 0) > 0 ? 'text-red-500' : 'text-highlighted'"
-            >
-              {{ stats?.total ?? 0 }}
-            </p>
-            <p class="text-sm text-muted">
-              Events ({{ hoursWindow }}h)
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-trending-up"
-            class="size-8 text-yellow-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ stats?.hourlyRate?.toFixed(1) ?? '0' }}
-            </p>
-            <p class="text-sm text-muted">
-              Events/Hour
-            </p>
-          </div>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-server"
-            class="size-8 text-blue-500"
-          />
-          <div>
-            <p class="text-2xl font-bold text-highlighted">
-              {{ Object.keys(stats?.byProvider ?? {}).length }}
-            </p>
-            <p class="text-sm text-muted">
-              Providers Affected
-            </p>
-          </div>
-        </div>
-      </UCard>
+      <StatCard
+        :value="stats?.total ?? 0"
+        :label="`Events (${hoursWindow}h)`"
+        icon="i-lucide-shield-alert"
+        :icon-class="(stats?.total ?? 0) > 0 ? 'text-red-500' : 'text-muted'"
+        :value-class="(stats?.total ?? 0) > 0 ? 'text-red-500' : 'text-highlighted'"
+      />
+      <StatCard
+        :value="stats?.hourlyRate?.toFixed(1) ?? '0'"
+        label="Events/Hour"
+        icon="i-lucide-trending-up"
+        icon-class="text-yellow-500"
+      />
+      <StatCard
+        :value="Object.keys(stats?.byProvider ?? {}).length"
+        label="Providers Affected"
+        icon="i-lucide-server"
+        icon-class="text-blue-500"
+      />
     </div>
 
     <!-- Time window selector -->
@@ -309,21 +241,13 @@ const isHighRate = computed(() => (stats.value?.hourlyRate ?? 0) >= alertThresho
         </div>
       </div>
 
-      <div
+      <EmptyState
         v-else-if="recentEvents"
-        class="flex flex-col items-center justify-center py-12"
-      >
-        <UIcon
-          name="i-lucide-check-circle"
-          class="size-12 text-green-500 mb-3"
-        />
-        <p class="text-highlighted font-medium">
-          No rate limit events
-        </p>
-        <p class="text-sm text-muted">
-          No rate limits hit in the last {{ hoursWindow }} hours.
-        </p>
-      </div>
+        icon="i-lucide-check-circle"
+        icon-class="text-green-500"
+        title="No rate limit events"
+        :description="`No rate limits hit in the last ${hoursWindow} hours.`"
+      />
     </UCard>
   </div>
 </template>

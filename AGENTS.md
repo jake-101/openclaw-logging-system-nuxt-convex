@@ -52,12 +52,28 @@ app/                    # Nuxt 4 app directory (all frontend code)
   app.config.ts         # App-level config (UI theme colors)
   assets/css/main.css   # Tailwind + Nuxt UI imports, theme overrides
   components/           # Auto-imported Vue components
-  pages/                # File-based routing
+    DashboardNavbar.vue  # Page title/icon from useNavigation()
+    DashboardSidebar.vue # Sidebar nav menu from useNavigation()
+    StatCard.vue         # Reusable stat display (icon + value + label)
+    EmptyState.vue       # Reusable empty state (icon + title + description)
+  composables/           # Auto-imported composables
+    useChartOptions.ts   # Shared Chart.js option presets
+    useNavigation.ts     # Single source of truth for route metadata
+  plugins/               # Nuxt plugins
+    chartjs.client.ts    # Chart.js component registration (runs once)
+    convex.client.ts     # Convex client setup
+  utils/                 # Auto-imported pure utility functions
+    formatters.ts        # Shared formatting (timestamps, duration, cost, etc.)
+  pages/                 # File-based routing
 convex/                 # Convex backend (schema + server functions)
-  schema.ts             # Database schema (logs, sessions, errors)
+  schema.ts             # Database schema (logs, sessions, errors, cronRuns, rateLimits, modelUsage)
   logs.ts               # Log CRUD queries/mutations
   sessions.ts           # Session queries/mutations
   errors.ts             # Error tracking queries/mutations
+  cronRuns.ts           # Cron job run tracking
+  rateLimits.ts         # Rate limit event tracking
+  modelUsage.ts         # Model API call tracking
+  apiDocs.ts            # Self-documenting API endpoint
   _generated/           # Auto-generated (do NOT edit)
 nuxt.config.ts          # Nuxt configuration
 vitest.config.ts        # Vitest configuration
@@ -111,6 +127,31 @@ eslint.config.mjs       # ESLint flat config (extends @nuxt/eslint)
 - Convex server: `import { query, mutation } from './_generated/server'`
 - Convex values: `import { v } from 'convex/values'`
 
+### DRY Patterns (Shared Code)
+
+The codebase follows strict DRY principles. Before adding new code, check
+whether a shared utility, composable, or component already exists:
+
+- **Formatting functions** (`formatTimestamp`, `formatDuration`, `formatCost`,
+  `formatRelativeTime`, etc.) live in `app/utils/formatters.ts`. Never
+  redefine these in page components -- import from utils (auto-imported).
+- **Color constants** (`LOG_LEVEL_COLORS`, `STATUS_COLORS`,
+  `ACTIVE_SESSION_THRESHOLD_MS`) live in `app/utils/formatters.ts`.
+- **Chart.js registration** happens once in `app/plugins/chartjs.client.ts`.
+  Never call `ChartJS.register()` in page components.
+- **Chart options** (`bar`, `costBar`, `durationBar`, `line`, `doughnut`,
+  `doughnutRight`) are returned by `useChartOptions()` composable. Use these
+  presets or extend them -- don't duplicate option objects in pages.
+- **Navigation metadata** (route labels, icons, sidebar groups) lives in
+  `useNavigation()` composable. DashboardNavbar and DashboardSidebar both
+  consume this single source of truth.
+- **Stat cards** use the `<StatCard>` component (icon, value, label, color).
+  Don't inline UCard + UIcon + text for stat displays.
+- **Empty states** use the `<EmptyState>` component (icon, title, description).
+  Don't inline the empty state div pattern in pages.
+- **Page metadata** -- every page should call `definePageMeta({ title: '...' })`
+  at the top of `<script setup>`.
+
 ### Error Handling
 
 - Convex mutations/queries throw on validation failure -- wrap calls in try/catch
@@ -121,7 +162,7 @@ eslint.config.mjs       # ESLint flat config (extends @nuxt/eslint)
 
 ## Convex Schema Overview
 
-Three tables: `logs`, `sessions`, `errors`.
+Six tables: `logs`, `sessions`, `errors`, `cronRuns`, `rateLimits`, `modelUsage`.
 
 - **logs**: Individual log entries with session/agent context and optional tool
   tracking. Indexed by session+timestamp, timestamp, level, and toolName.
@@ -129,6 +170,12 @@ Three tables: `logs`, `sessions`, `errors`.
   errors, tokenUsage, cost). Upserted on each activity.
 - **errors**: Dedicated error tracking with resolution state. Query `unresolved`
   for the error dashboard.
+- **cronRuns**: Cron job execution records with duration, status, and optional
+  error messages. Upserted by jobId+runId.
+- **rateLimits**: Rate limit events from API providers with retry-after and
+  endpoint info. Queried by time window for alerting.
+- **modelUsage**: Per-request model API call tracking with token counts, cost,
+  latency, and cache metrics. Aggregated by model, provider, and day.
 
 All timestamps are Unix milliseconds (`Date.now()`). Session keys are
 string identifiers linking logs to sessions.
