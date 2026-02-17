@@ -47,7 +47,7 @@ function formatTimestamp(ts: number): string {
   return new Date(ts).toLocaleString()
 }
 
-const levelColors: Record<string, string> = {
+const levelColors: Record<string, 'neutral' | 'primary' | 'warning' | 'error'> = {
   debug: 'neutral',
   info: 'primary',
   warn: 'warning',
