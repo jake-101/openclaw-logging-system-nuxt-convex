@@ -26,8 +26,7 @@ const navigation: NavigationMenuItem[][] = [[
   {
     label: 'Analytics',
     icon: 'i-lucide-bar-chart-3',
-    to: '/analytics',
-    disabled: true
+    to: '/analytics'
   }
 ]]
 </script>

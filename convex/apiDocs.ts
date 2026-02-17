@@ -82,6 +82,7 @@ export const describe = query({
 
       queries: {
         'logs.list': 'List logs, optionally filtered by sessionKey, level, limit',
+        'logs.search': 'Search logs by message/agent/tool content with optional sessionKey and level filters',
         'sessions.list': 'List sessions ordered by last activity',
         'sessions.get': 'Get a single session by sessionKey',
         'errors.unresolved': 'List all unresolved errors',

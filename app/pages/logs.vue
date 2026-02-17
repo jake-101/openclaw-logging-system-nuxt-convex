@@ -4,13 +4,22 @@ import { api } from '#convex/_generated/api'
 
 const levelFilter = ref('all')
 const sessionFilter = ref('')
+const searchInput = ref('')
+const searchTerm = refDebounced(searchInput, 300)
 const tailMode = ref(true)
 const logLimit = ref(200)
 
-const queryArgs = computed(() => {
-  const args: Record<string, unknown> = { limit: logLimit.value }
+const isSearching = computed(() => searchTerm.value.trim().length > 0)
+
+// Standard list query args (used when not searching)
+const listArgs = computed(() => {
+  const args: {
+    limit: number
+    level?: 'debug' | 'info' | 'warn' | 'error'
+    sessionKey?: string
+  } = { limit: logLimit.value }
   if (levelFilter.value && levelFilter.value !== 'all') {
-    args.level = levelFilter.value
+    args.level = levelFilter.value as 'debug' | 'info' | 'warn' | 'error'
   }
   if (sessionFilter.value.trim()) {
     args.sessionKey = sessionFilter.value.trim()
@@ -18,12 +27,38 @@ const queryArgs = computed(() => {
   return args
 })
 
-const { data: logs } = useConvexQuery(api.logs.list, queryArgs)
+// Search query args (used when searching)
+const searchQueryArgs = computed(() => {
+  const args: {
+    searchTerm: string
+    limit: number
+    level?: 'debug' | 'info' | 'warn' | 'error'
+    sessionKey?: string
+  } = {
+    searchTerm: isSearching.value ? searchTerm.value.trim() : '__disabled__',
+    limit: isSearching.value ? logLimit.value : 1
+  }
+  if (levelFilter.value && levelFilter.value !== 'all') {
+    args.level = levelFilter.value as 'debug' | 'info' | 'warn' | 'error'
+  }
+  if (sessionFilter.value.trim()) {
+    args.sessionKey = sessionFilter.value.trim()
+  }
+  return args
+})
+
+const { data: listLogs } = useConvexQuery(api.logs.list, listArgs)
+const { data: searchLogs } = useConvexQuery(api.logs.search, searchQueryArgs)
+
+const activeLogs = computed(() => {
+  if (isSearching.value) return searchLogs.value
+  return listLogs.value
+})
 
 const sortedLogs = computed(() => {
-  if (!logs.value) return []
-  // logs come desc from Convex, reverse for chronological (tail mode shows newest at bottom)
-  return [...logs.value].reverse()
+  if (!activeLogs.value) return []
+  // Logs come desc from Convex, reverse for chronological (tail mode shows newest at bottom)
+  return [...activeLogs.value].reverse()
 })
 
 const levelOptions = [
@@ -83,10 +118,18 @@ const columns = [
       />
 
       <UInput
-        v-model="sessionFilter"
-        placeholder="Filter by session key..."
+        v-model="searchInput"
+        placeholder="Search logs..."
         icon="i-lucide-search"
         class="w-64"
+        :trailing-icon="isSearching ? 'i-lucide-loader' : undefined"
+      />
+
+      <UInput
+        v-model="sessionFilter"
+        placeholder="Session key..."
+        icon="i-lucide-filter"
+        class="w-48"
       />
 
       <div class="flex items-center gap-2 ml-auto">
@@ -111,7 +154,7 @@ const columns = [
       <UTable
         :data="sortedLogs"
         :columns="columns"
-        :loading="!logs"
+        :loading="!activeLogs"
         class="w-full"
       >
         <template #timestamp-cell="{ row }">
@@ -170,7 +213,7 @@ const columns = [
       </UTable>
 
       <div
-        v-if="sortedLogs.length === 0 && logs"
+        v-if="sortedLogs.length === 0 && activeLogs"
         class="flex flex-col items-center justify-center py-16"
       >
         <UIcon
@@ -178,10 +221,10 @@ const columns = [
           class="size-12 text-muted mb-3"
         />
         <p class="text-muted">
-          No log entries found.
+          {{ isSearching ? 'No logs match your search.' : 'No log entries found.' }}
         </p>
         <p class="text-sm text-muted">
-          Start an agent session to see activity here.
+          {{ isSearching ? 'Try a different search term.' : 'Start an agent session to see activity here.' }}
         </p>
       </div>
     </div>
