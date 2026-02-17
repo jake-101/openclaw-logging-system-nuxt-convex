@@ -24,18 +24,8 @@ useSeoMeta({
 
 <template>
   <UApp>
-    <UDashboardGroup>
-      <DashboardSidebar />
-
-      <UDashboardPanel>
-        <template #header>
-          <DashboardNavbar />
-        </template>
-
-        <template #body>
-          <NuxtPage />
-        </template>
-      </UDashboardPanel>
-    </UDashboardGroup>
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </UApp>
 </template>

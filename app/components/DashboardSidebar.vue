@@ -1,5 +1,16 @@
 <script setup lang="ts">
 const { sidebarGroups } = useNavigation()
+const { logout, userEmail } = useAuth()
+const toast = useToast()
+
+async function handleLogout() {
+  await logout()
+  toast.add({
+    title: 'Signed out',
+    color: 'neutral'
+  })
+  await navigateTo('/login')
+}
 </script>
 
 <template>
@@ -40,9 +51,21 @@ const { sidebarGroups } = useNavigation()
     <template #footer="{ collapsed }">
       <div
         class="flex items-center gap-2"
-        :class="collapsed ? 'justify-center' : ''"
+        :class="collapsed ? 'flex-col justify-center' : 'justify-between'"
       >
         <UColorModeButton />
+        <UTooltip
+          :text="userEmail ?? 'Sign out'"
+          :side="collapsed ? 'right' : 'top'"
+        >
+          <UButton
+            icon="i-lucide-log-out"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="handleLogout"
+          />
+        </UTooltip>
       </div>
     </template>
   </UDashboardSidebar>

@@ -48,25 +48,30 @@ Convex functions live in `convex/`. After changing `convex/schema.ts`, run
 
 ```
 app/                    # Nuxt 4 app directory (all frontend code)
-  app.vue               # Root layout (UApp wrapper)
+  app.vue               # Root app shell (UApp + NuxtLayout + NuxtPage)
   app.config.ts         # App-level config (UI theme colors)
   assets/css/main.css   # Tailwind + Nuxt UI imports, theme overrides
   components/           # Auto-imported Vue components
     DashboardNavbar.vue  # Page title/icon from useNavigation()
-    DashboardSidebar.vue # Sidebar nav menu from useNavigation()
+    DashboardSidebar.vue # Sidebar nav menu + logout button
     StatCard.vue         # Reusable stat display (icon + value + label)
     EmptyState.vue       # Reusable empty state (icon + title + description)
   composables/           # Auto-imported composables
+    useAuth.ts           # Authentication state + login/logout/register
     useChartOptions.ts   # Shared Chart.js option presets
     useNavigation.ts     # Single source of truth for route metadata
+  layouts/               # Nuxt layouts
+    default.vue          # Dashboard layout (sidebar + navbar + content)
   plugins/               # Nuxt plugins
     chartjs.client.ts    # Chart.js component registration (runs once)
-    convex.client.ts     # Convex client setup
+    convex.client.ts     # Convex client setup + auth adapter wiring
   utils/                 # Auto-imported pure utility functions
     formatters.ts        # Shared formatting (timestamps, duration, cost, etc.)
   pages/                 # File-based routing
+    login.vue            # Login / first-user setup page (layout: false)
 convex/                 # Convex backend (schema + server functions)
-  schema.ts             # Database schema (logs, sessions, errors, cronRuns, rateLimits, modelUsage)
+  schema.ts             # Database schema (8 tables, including auth)
+  auth.ts               # Dashboard auth: register, login, logout, validateSession
   logs.ts               # Log CRUD queries/mutations
   sessions.ts           # Session queries/mutations
   errors.ts             # Error tracking queries/mutations
@@ -160,9 +165,40 @@ whether a shared utility, composable, or component already exists:
 - Log errors with `level: 'error'` to the `logs` table for dashboard visibility
 - Never swallow errors silently -- always log or surface to the user
 
+## Authentication
+
+The dashboard is protected by simple token-based authentication:
+
+- **Backend**: `convex/auth.ts` with PBKDF2 password hashing (Web Crypto API)
+- **Frontend**: `useAuth()` composable manages localStorage tokens
+- **Route guard**: `@convex-vue/core` navigation guard redirects to `/login`
+- **First-user setup**: If no users exist, the login page shows a registration
+  form. Subsequent users require an existing admin session.
+
+**Tables**: `dashboardUsers` (email, passwordHash, passwordSalt) and
+`dashboardSessions` (userId, token, expiresAt). Sessions expire after 7 days.
+
+**Auth composable** (`useAuth()`):
+- `login(email, password)` -- authenticate and store session token
+- `register(email, password)` -- create first user (or with admin token)
+- `logout()` -- invalidate server session and clear local token
+- `checkHasUsers()` -- detect first-user setup mode
+- `isAuthenticated`, `isLoading`, `userEmail` -- reactive state
+- `getToken()` -- returns token for Convex auth adapter
+
+**Convex plugin** (`convex.client.ts`) passes the auth adapter to
+`createConvexVue()` with `installNavigationGuard: true`. All routes except
+`/login` require authentication.
+
+**Important**: Auth functions use `makeFunctionReference` from `convex/server`
+instead of `api.auth.*` to avoid dependency on generated types. After running
+`npx convex dev` to regenerate types, you can switch to typed `api.auth.*`
+references if preferred.
+
 ## Convex Schema Overview
 
-Six tables: `logs`, `sessions`, `errors`, `cronRuns`, `rateLimits`, `modelUsage`.
+Eight tables: `dashboardUsers`, `dashboardSessions`, `logs`, `sessions`,
+`errors`, `cronRuns`, `rateLimits`, `modelUsage`.
 
 - **logs**: Individual log entries with session/agent context and optional tool
   tracking. Indexed by session+timestamp, timestamp, level, and toolName.

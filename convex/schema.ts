@@ -2,6 +2,24 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
 export default defineSchema({
+  // Dashboard authentication
+  dashboardUsers: defineTable({
+    email: v.string(),
+    passwordHash: v.string(), // PBKDF2-derived key (hex)
+    passwordSalt: v.string(), // Random salt (hex)
+    createdAt: v.number()
+  })
+    .index('by_email', ['email']),
+
+  dashboardSessions: defineTable({
+    userId: v.id('dashboardUsers'),
+    token: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number()
+  })
+    .index('by_token', ['token'])
+    .index('by_user', ['userId']),
+
   // Main log entries
   logs: defineTable({
     sessionKey: v.string(),

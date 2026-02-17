@@ -125,6 +125,19 @@ export const describe = query({
         }
       },
 
+      authentication: {
+        description: 'Dashboard is protected by token-based auth. Agent API endpoints (logs, sessions, errors, etc.) do not require auth -- only the dashboard web UI does.',
+        mutations: {
+          'auth.register': 'Create a dashboard user. First user is open registration; subsequent users require an existing session token (existingToken arg).',
+          'auth.login': 'Authenticate with email + password. Returns { token, email }.',
+          'auth.logout': 'Invalidate a session token.'
+        },
+        queries: {
+          'auth.validateSession': 'Check if a token is valid. Returns { email, expiresAt } or null.',
+          'auth.hasUsers': 'Returns true if any dashboard users exist (for first-user setup detection).'
+        }
+      },
+
       queries: {
         'logs.list': 'List logs, optionally filtered by sessionKey, level, limit',
         'logs.search': 'Search logs by message/agent/tool content with optional sessionKey and level filters',
