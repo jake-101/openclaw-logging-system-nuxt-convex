@@ -220,8 +220,30 @@ crontab -e
 
 ---
 
+## Step 9: Integrate the Logger Into Your Agent
+
+The sync scripts handle historical and batch data, but you can also have your agent log directly to the dashboard in real time. The easiest way is to ask your OpenClaw agent to integrate the `ConvexLogger` wrapper into its existing scripts.
+
+Give your agent something like:
+
+> Use the `ConvexLogger` class from `agent-scripts/convex_logger.py` to log key events
+> to my Convex dashboard at `CONVEX_URL=http://localhost:3210`. Log session starts,
+> errors, tool calls, and session ends. Use the context manager pattern so sessions
+> are automatically closed.
+
+Or for TypeScript agents, point them at the wrapper in `docs/agent-integration.md`:
+
+> Integrate the `ConvexLogger` class from `docs/agent-integration.md` into this project.
+> The Convex URL is `process.env.CONVEX_URL`. Log session lifecycle, errors, and tool calls.
+
+The logger is lightweight (zero dependencies, fire-and-forget HTTP calls) and designed not to break your agent if the dashboard is down -- all logging calls fail silently unless `CONVEX_DEBUG` is set.
+
+For the full API your agent can call `apiDocs.describe` at runtime to discover all available mutations and their arguments.
+
+---
+
 ## Next Steps
 
-- **Custom logging from your own scripts** -- See [agent-scripts/README.md](../agent-scripts/README.md) for the `ConvexLogger` Python wrapper
-- **TypeScript/JS integration** -- See [docs/agent-integration.md](agent-integration.md) for the TypeScript `ConvexLogger` class
-- **API discovery** -- Your agent can query `apiDocs.describe` at runtime to discover all available mutations and their arguments
+- **Python logger reference** -- See [agent-scripts/README.md](../agent-scripts/README.md) for the `ConvexLogger` wrapper and sync script details
+- **TypeScript/JS logger reference** -- See [agent-integration.md](agent-integration.md) for the TypeScript `ConvexLogger` class
+- **API discovery** -- Query `apiDocs.describe` for the always-current API reference
