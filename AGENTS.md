@@ -179,6 +179,21 @@ practices. Key points:
 - A Convex skill does not exist yet. Refer to the Convex schema and function
   files in `convex/` as the source of truth for backend patterns.
 
+## Keeping Docs in Sync
+
+When you add or change Convex functions (mutations, queries, actions),
+you **must** update these two places:
+
+1. **`convex/apiDocs.ts`** -- The `describe` query returns the full API
+   schema to agents at runtime. This is the authoritative source. Update
+   the mutations/queries/conventions objects to reflect any changes.
+2. **`docs/agent-integration.md`** -- Human-readable setup guide and
+   `ConvexLogger` wrapper. Update the wrapper class, usage examples, and
+   tables if args change or new endpoints are added.
+
+The `apiDocs.describe` endpoint is what agents call on connect, so if
+it's wrong, agents will send bad data. Treat it like a public contract.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
