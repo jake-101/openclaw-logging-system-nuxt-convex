@@ -29,7 +29,7 @@ async function hashPassword(password: string, salt: Uint8Array): Promise<string>
   const derivedBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt.buffer as ArrayBuffer,
       iterations: 100000,
       hash: 'SHA-256'
     },
@@ -42,7 +42,7 @@ async function hashPassword(password: string, salt: Uint8Array): Promise<string>
 function generateToken(): string {
   const bytes = new Uint8Array(32)
   crypto.getRandomValues(bytes)
-  return hexEncode(bytes.buffer)
+  return hexEncode(bytes.buffer as ArrayBuffer)
 }
 
 function generateSalt(): Uint8Array {
@@ -107,7 +107,7 @@ export const register = mutation({
     const userId = await ctx.db.insert('dashboardUsers', {
       email: args.email,
       passwordHash,
-      passwordSalt: hexEncode(salt.buffer),
+      passwordSalt: hexEncode(salt.buffer as ArrayBuffer),
       createdAt: Date.now()
     })
 

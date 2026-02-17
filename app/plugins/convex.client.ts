@@ -9,24 +9,22 @@ export default defineNuxtPlugin((nuxtApp) => {
     return
   }
 
-  const { getToken, isAuthenticated, isLoading } = useAuth()
-
   const convexVue = createConvexVue({
-    convexUrl,
-    auth: {
-      getToken,
-      isAuthenticated,
-      isLoading,
-      installNavigationGuard: true,
-      needsAuth: (to) => {
-        // Login page does not require auth
-        return to.path !== '/login'
-      },
-      redirectTo: () => {
-        return { path: '/login' }
-      }
-    }
+    convexUrl
   })
 
   nuxtApp.vueApp.use(convexVue)
+
+  // Route guard: redirect to /login if not authenticated
+  nuxtApp.hook('app:created', () => {
+    const router = useRouter()
+    router.beforeEach((to) => {
+      if (to.path === '/login') return true
+      const { isAuthenticated } = useAuth()
+      if (!isAuthenticated.value) {
+        return { path: '/login' }
+      }
+      return true
+    })
+  })
 })

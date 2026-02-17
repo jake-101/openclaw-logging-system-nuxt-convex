@@ -9,6 +9,7 @@
  */
 
 import type * as apiDocs from "../apiDocs.js";
+import type * as auth from "../auth.js";
 import type * as cronRuns from "../cronRuns.js";
 import type * as errors from "../errors.js";
 import type * as logs from "../logs.js";
@@ -24,6 +25,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   apiDocs: typeof apiDocs;
+  auth: typeof auth;
   cronRuns: typeof cronRuns;
   errors: typeof errors;
   logs: typeof logs;

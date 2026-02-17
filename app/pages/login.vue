@@ -134,7 +134,7 @@ async function handleSubmit() {
             name="password"
             label="Password"
             required
-            :hint="isSetup ? 'Min 8 characters' : undefined"
+            :description="isSetup ? 'Min 8 characters' : undefined"
           >
             <UInput
               v-model="password"
