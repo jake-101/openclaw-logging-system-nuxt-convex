@@ -39,6 +39,18 @@ export const list = query({
   }
 })
 
+export const countToday = query({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000
+    const logs = await ctx.db
+      .query('logs')
+      .withIndex('by_timestamp', q => q.gte('timestamp', cutoff))
+      .collect()
+    return logs.length
+  }
+})
+
 export const search = query({
   args: {
     searchTerm: v.string(),

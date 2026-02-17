@@ -7,10 +7,10 @@ definePageMeta({ title: 'Dashboard' })
 const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 50 })
 const { data: recentLogs } = useConvexQuery(api.logs.list, { limit: 10 })
 const { data: unresolvedErrors } = useConvexQuery(api.errors.unresolved, {})
+const { data: logsToday } = useConvexQuery(api.logs.countToday, {})
 
 const totalSessions = computed(() => sessions.value?.length ?? 0)
 const totalErrors = computed(() => unresolvedErrors.value?.length ?? 0)
-const recentLogCount = computed(() => recentLogs.value?.length ?? 0)
 
 const activeSessions = computed(() => {
   if (!sessions.value) return 0
@@ -37,8 +37,8 @@ const stats = computed(() => [
     color: totalErrors.value > 0 ? 'text-red-500' as const : 'text-muted' as const
   },
   {
-    label: 'Recent Logs',
-    value: recentLogCount.value,
+    label: 'Logs Today',
+    value: logsToday.value ?? 0,
     icon: 'i-lucide-scroll-text',
     color: 'text-muted' as const
   }
