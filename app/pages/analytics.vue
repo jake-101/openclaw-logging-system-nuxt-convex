@@ -229,11 +229,16 @@ const { line: lineOptions, bar: barOptions, doughnut: doughnutOptions } = useCha
         </template>
         <template #successRate-cell="{ row }">
           <UBadge
+            v-if="row.original.successRate !== null"
             :label="`${row.original.successRate}%`"
             :color="row.original.successRate >= 90 ? 'success' : row.original.successRate >= 70 ? 'warning' : 'error'"
             variant="subtle"
             size="xs"
           />
+          <span
+            v-else
+            class="font-mono text-xs text-muted"
+          >--</span>
         </template>
         <template #avgDuration-cell="{ row }">
           <span class="font-mono text-xs text-muted">

@@ -67,6 +67,7 @@ export const summary = query({
     const toolBreakdown: Record<string, {
       calls: number
       success: number
+      tracked: number
       totalDuration: number
       durationCount: number
     }> = {}
@@ -77,9 +78,12 @@ export const summary = query({
       levelDistribution[log.level] = (levelDistribution[log.level] ?? 0) + 1
 
       if (log.toolName) {
-        const tool = toolBreakdown[log.toolName] ?? { calls: 0, success: 0, totalDuration: 0, durationCount: 0 }
+        const tool = toolBreakdown[log.toolName] ?? { calls: 0, success: 0, tracked: 0, totalDuration: 0, durationCount: 0 }
         tool.calls++
-        if (log.toolSuccess) tool.success++
+        if (log.toolSuccess !== undefined) {
+          tool.tracked++
+          if (log.toolSuccess) tool.success++
+        }
         if (log.toolDuration) {
           tool.totalDuration += log.toolDuration
           tool.durationCount++
@@ -92,7 +96,7 @@ export const summary = query({
       .map(([name, stats]) => ({
         name,
         calls: stats.calls,
-        successRate: stats.calls > 0 ? Math.round((stats.success / stats.calls) * 100) : 0,
+        successRate: stats.tracked > 0 ? Math.round((stats.success / stats.tracked) * 100) : null,
         avgDuration: stats.durationCount > 0 ? Math.round(stats.totalDuration / stats.durationCount) : 0
       }))
       .sort((a, b) => b.calls - a.calls)
