@@ -264,13 +264,12 @@ function toggleJob(jobId: string) {
               >
                 {{ run.error }}
               </span>
-              <NuxtLink
+              <span
                 v-if="run.sessionKey"
-                :to="`/session-${run.sessionKey}`"
-                class="text-xs font-mono text-primary hover:underline shrink-0"
+                class="text-xs font-mono text-muted shrink-0"
               >
                 {{ run.sessionKey }}
-              </NuxtLink>
+              </span>
             </div>
           </div>
         </div>
