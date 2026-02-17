@@ -6,7 +6,7 @@ import { Bar } from 'vue-chartjs'
 definePageMeta({ title: 'Cron Jobs' })
 
 const statusFilter = ref('all')
-const { data: recentRuns } = useConvexQuery(api.cronRuns.listRecent, computed(() => {
+const { data: recentRuns, isLoading: isPending } = useConvexQuery(api.cronRuns.listRecent, computed(() => {
   if (statusFilter.value !== 'all') {
     return { limit: 100, status: statusFilter.value }
   }
@@ -98,6 +98,7 @@ function toggleJob(jobId: string) {
         label="Successful Runs"
         icon="i-lucide-check-circle"
         icon-class="text-green-500"
+        :loading="isPending"
       />
       <StatCard
         :value="failedRuns"
@@ -105,12 +106,14 @@ function toggleJob(jobId: string) {
         icon="i-lucide-x-circle"
         :icon-class="failedRuns > 0 ? 'text-red-500' : 'text-muted'"
         :value-class="failedRuns > 0 ? 'text-red-500' : 'text-highlighted'"
+        :loading="isPending"
       />
       <StatCard
         :value="totalRuns"
         label="Total Runs"
         icon="i-lucide-clock"
         icon-class="text-blue-500"
+        :loading="isPending"
       />
     </div>
 
@@ -151,8 +154,31 @@ function toggleJob(jobId: string) {
         Jobs
       </h3>
 
+      <div
+        v-if="isPending"
+        class="space-y-4"
+      >
+        <UCard
+          v-for="n in 3"
+          :key="n"
+        >
+          <template #header>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <USkeleton class="size-5 rounded" />
+                <div class="space-y-1">
+                  <USkeleton class="h-4 w-32" />
+                  <USkeleton class="h-3 w-48" />
+                </div>
+              </div>
+              <USkeleton class="h-5 w-16 rounded-full" />
+            </div>
+          </template>
+        </UCard>
+      </div>
+
       <EmptyState
-        v-if="!jobs.length && recentRuns"
+        v-else-if="!jobs.length && recentRuns"
         icon="i-lucide-timer"
         title="No cron jobs recorded yet."
         description="Jobs will appear here once OpenClaw starts reporting."

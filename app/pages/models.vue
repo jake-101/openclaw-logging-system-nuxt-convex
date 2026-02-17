@@ -8,16 +8,18 @@ definePageMeta({ title: 'Model Usage' })
 const hoursWindow = ref(6)
 const daysWindow = ref(7)
 
-const { data: usageSummary } = useConvexQuery(api.modelUsage.summary, computed(() => ({
+const { data: usageSummary, isLoading: summaryPending } = useConvexQuery(api.modelUsage.summary, computed(() => ({
   hours: hoursWindow.value
 })))
 
 const modelStats = computed(() => usageSummary.value?.byModel ?? null)
 const providerStats = computed(() => usageSummary.value?.byProvider ?? null)
 const latencyStats = computed(() => usageSummary.value?.latencyStats ?? null)
-const { data: dailySummary } = useConvexQuery(api.modelUsage.dailySummary, computed(() => ({
+const { data: dailySummary, isLoading: dailyPending } = useConvexQuery(api.modelUsage.dailySummary, computed(() => ({
   days: daysWindow.value
 })))
+
+const isPending = computed(() => summaryPending.value || dailyPending.value)
 
 // Summary stats
 const totalCalls = computed(() => {
@@ -175,24 +177,28 @@ const dailyLineOptions = {
         label="API Calls"
         icon="i-lucide-message-square"
         icon-class="text-blue-500"
+        :loading="isPending"
       />
       <StatCard
         :value="totalTokens.toLocaleString()"
         label="Total Tokens"
         icon="i-lucide-hash"
         icon-class="text-purple-500"
+        :loading="isPending"
       />
       <StatCard
         :value="`$${totalCost.toFixed(4)}`"
         label="Total Cost"
         icon="i-lucide-dollar-sign"
         icon-class="text-green-500"
+        :loading="isPending"
       />
       <StatCard
         :value="latencyStats?.p50 ? `${latencyStats.p50}ms` : '—'"
         label="p50 Latency"
         icon="i-lucide-gauge"
         icon-class="text-yellow-500"
+        :loading="isPending"
       />
     </div>
 

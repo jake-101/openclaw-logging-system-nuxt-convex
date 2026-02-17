@@ -7,11 +7,11 @@ definePageMeta({ title: 'Session Detail' })
 const route = useRoute()
 const sessionKey = computed(() => route.params.key as string)
 
-const { data: session } = useConvexQuery(api.sessions.get, computed(() => ({
+const { data: session, isLoading: sessionPending } = useConvexQuery(api.sessions.get, computed(() => ({
   sessionKey: sessionKey.value
 })))
 
-const { data: logs } = useConvexQuery(api.logs.list, computed(() => ({
+const { data: logs, isLoading: logsPending } = useConvexQuery(api.logs.list, computed(() => ({
   sessionKey: sessionKey.value,
   limit: 200
 })))
@@ -39,8 +39,27 @@ const sortedLogs = computed(() => {
       />
     </div>
 
+    <!-- Session Overview skeleton -->
+    <UCard v-if="sessionPending">
+      <template #header>
+        <div class="flex items-center justify-between">
+          <USkeleton class="h-6 w-64" />
+          <USkeleton class="h-4 w-32" />
+        </div>
+      </template>
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div
+          v-for="n in 6"
+          :key="n"
+        >
+          <USkeleton class="h-3 w-16 mb-1" />
+          <USkeleton class="h-7 w-12" />
+        </div>
+      </div>
+    </UCard>
+
     <!-- Session Overview -->
-    <UCard v-if="session">
+    <UCard v-else-if="session">
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -189,7 +208,22 @@ const sortedLogs = computed(() => {
       </template>
 
       <div
-        v-if="sortedLogs.length"
+        v-if="logsPending"
+        class="space-y-2"
+      >
+        <div
+          v-for="n in 8"
+          :key="n"
+          class="flex items-start gap-3 py-1.5"
+        >
+          <USkeleton class="h-4 w-20 shrink-0" />
+          <USkeleton class="h-4 w-14 shrink-0" />
+          <USkeleton class="h-4 flex-1" />
+        </div>
+      </div>
+
+      <div
+        v-else-if="sortedLogs.length"
         class="space-y-1"
       >
         <div
@@ -221,7 +255,7 @@ const sortedLogs = computed(() => {
       </div>
 
       <EmptyState
-        v-else-if="logs"
+        v-else
         icon="i-lucide-scroll-text"
         title="No logs for this session yet."
       />

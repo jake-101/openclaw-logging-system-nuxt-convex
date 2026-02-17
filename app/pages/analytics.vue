@@ -5,8 +5,10 @@ import { Bar, Doughnut, Line } from 'vue-chartjs'
 
 definePageMeta({ title: 'Analytics' })
 
-const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 50 })
-const { data: logs } = useConvexQuery(api.logs.list, { limit: 100 })
+const { data: sessions, isLoading: sessionsPending } = useConvexQuery(api.sessions.list, { limit: 50 })
+const { data: logs, isLoading: logsPending } = useConvexQuery(api.logs.list, { limit: 100 })
+
+const isPending = computed(() => sessionsPending.value || logsPending.value)
 
 // --- Cost over time (by session, sorted by start time) ---
 const costChartData = computed(() => {
@@ -140,18 +142,21 @@ const { line: lineOptions, bar: barOptions, doughnut: doughnutOptions } = useCha
         label="Total Cost"
         icon="i-lucide-dollar-sign"
         icon-class="text-green-500"
+        :loading="isPending"
       />
       <StatCard
         :value="totalTokens.toLocaleString()"
         label="Total Tokens"
         icon="i-lucide-hash"
         icon-class="text-blue-500"
+        :loading="isPending"
       />
       <StatCard
         :value="totalToolCalls.toLocaleString()"
         label="Total Tool Calls"
         icon="i-lucide-wrench"
         icon-class="text-purple-500"
+        :loading="isPending"
       />
     </div>
 

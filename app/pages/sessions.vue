@@ -4,7 +4,7 @@ import { api } from '#convex/_generated/api'
 
 definePageMeta({ title: 'Sessions' })
 
-const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 100 })
+const { data: sessions, isLoading: isPending } = useConvexQuery(api.sessions.list, { limit: 100 })
 
 const columns = [
   { accessorKey: 'sessionKey', header: 'Session' },
@@ -32,7 +32,7 @@ const columns = [
     <UTable
       :data="sessions ?? []"
       :columns="columns"
-      :loading="!sessions"
+      :loading="isPending"
       class="w-full"
     >
       <template #sessionKey-cell="{ row }">

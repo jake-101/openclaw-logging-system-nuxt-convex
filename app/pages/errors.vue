@@ -5,7 +5,7 @@ import type { Id } from '#convex/_generated/dataModel'
 
 definePageMeta({ title: 'Errors' })
 
-const { data: unresolvedErrors } = useConvexQuery(api.errors.unresolved, {})
+const { data: unresolvedErrors, isLoading: isPending } = useConvexQuery(api.errors.unresolved, {})
 
 const { mutate: markResolved, isLoading: isResolving } = useConvexMutation(api.errors.markResolved)
 
@@ -67,9 +67,38 @@ async function handleResolve(id: Id<'errors'>) {
       </div>
     </div>
 
+    <!-- Skeleton -->
+    <div
+      v-if="isPending"
+      class="space-y-4"
+    >
+      <UCard
+        v-for="n in 3"
+        :key="n"
+      >
+        <template #header>
+          <div class="flex items-center gap-3">
+            <USkeleton class="size-5 rounded" />
+            <USkeleton class="h-5 w-32" />
+            <USkeleton class="h-5 w-8 rounded-full" />
+          </div>
+        </template>
+        <div class="space-y-3">
+          <div
+            v-for="i in 2"
+            :key="i"
+            class="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 space-y-2"
+          >
+            <USkeleton class="h-4 w-3/4" />
+            <USkeleton class="h-3 w-1/2" />
+          </div>
+        </div>
+      </UCard>
+    </div>
+
     <!-- Empty state -->
     <EmptyState
-      v-if="unresolvedErrors && unresolvedErrors.length === 0"
+      v-else-if="unresolvedErrors && unresolvedErrors.length === 0"
       icon="i-lucide-check-circle"
       icon-class="text-green-500"
       title="No unresolved errors"
@@ -78,7 +107,7 @@ async function handleResolve(id: Id<'errors'>) {
 
     <!-- Grouped errors -->
     <div
-      v-else
+      v-else-if="groupedErrors.length"
       class="space-y-4"
     >
       <UCard

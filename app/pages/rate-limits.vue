@@ -6,13 +6,15 @@ import { Bar, Doughnut } from 'vue-chartjs'
 definePageMeta({ title: 'Rate Limits' })
 
 const hoursWindow = ref(6)
-const { data: recentEvents } = useConvexQuery(api.rateLimits.listRecent, computed(() => ({
+const { data: recentEvents, isLoading: eventsPending } = useConvexQuery(api.rateLimits.listRecent, computed(() => ({
   limit: 200,
   hours: hoursWindow.value
 })))
-const { data: stats } = useConvexQuery(api.rateLimits.getStats, computed(() => ({
+const { data: stats, isLoading: statsPending } = useConvexQuery(api.rateLimits.getStats, computed(() => ({
   hours: hoursWindow.value
 })))
+
+const isPending = computed(() => eventsPending.value || statsPending.value)
 
 // Provider breakdown chart
 const providerChartData = computed(() => {
@@ -107,18 +109,21 @@ const isHighRate = computed(() => (stats.value?.hourlyRate ?? 0) >= alertThresho
         icon="i-lucide-shield-alert"
         :icon-class="(stats?.total ?? 0) > 0 ? 'text-red-500' : 'text-muted'"
         :value-class="(stats?.total ?? 0) > 0 ? 'text-red-500' : 'text-highlighted'"
+        :loading="isPending"
       />
       <StatCard
         :value="stats?.hourlyRate?.toFixed(1) ?? '0'"
         label="Events/Hour"
         icon="i-lucide-trending-up"
         icon-class="text-yellow-500"
+        :loading="isPending"
       />
       <StatCard
         :value="Object.keys(stats?.byProvider ?? {}).length"
         label="Providers Affected"
         icon="i-lucide-server"
         icon-class="text-blue-500"
+        :loading="isPending"
       />
     </div>
 

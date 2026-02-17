@@ -48,8 +48,10 @@ const searchQueryArgs = computed(() => {
   return args
 })
 
-const { data: listLogs } = useConvexQuery(api.logs.list, listArgs)
-const { data: searchLogs } = useConvexQuery(api.logs.search, searchQueryArgs)
+const { data: listLogs, isLoading: listPending } = useConvexQuery(api.logs.list, listArgs)
+const { data: searchLogs, isLoading: searchPending } = useConvexQuery(api.logs.search, searchQueryArgs)
+
+const isPending = computed(() => isSearching.value ? searchPending.value : listPending.value)
 
 const activeLogs = computed(() => {
   if (isSearching.value) return searchLogs.value
@@ -162,7 +164,7 @@ const visibleColumns = computed(() =>
       <UTable
         :data="activeLogs ?? []"
         :columns="visibleColumns"
-        :loading="!activeLogs"
+        :loading="isPending"
         class="w-full"
       >
         <template #timestamp-cell="{ row }">

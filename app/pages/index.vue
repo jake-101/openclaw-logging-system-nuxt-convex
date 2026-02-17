@@ -4,10 +4,12 @@ import { api } from '#convex/_generated/api'
 
 definePageMeta({ title: 'Dashboard' })
 
-const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 50 })
-const { data: recentLogs } = useConvexQuery(api.logs.list, { limit: 10 })
-const { data: unresolvedErrors } = useConvexQuery(api.errors.unresolved, {})
-const { data: logsToday } = useConvexQuery(api.logs.countToday, {})
+const { data: sessions, isLoading: sessionsPending } = useConvexQuery(api.sessions.list, { limit: 50 })
+const { data: recentLogs, isLoading: logsPending } = useConvexQuery(api.logs.list, { limit: 10 })
+const { data: unresolvedErrors, isLoading: errorsPending } = useConvexQuery(api.errors.unresolved, {})
+const { data: logsToday, isLoading: logsTodayPending } = useConvexQuery(api.logs.countToday, {})
+
+const isLoading = computed(() => sessionsPending.value || logsPending.value || errorsPending.value || logsTodayPending.value)
 
 const totalSessions = computed(() => sessions.value?.length ?? 0)
 const totalErrors = computed(() => unresolvedErrors.value?.length ?? 0)
@@ -56,6 +58,7 @@ const stats = computed(() => [
         :label="stat.label"
         :icon="stat.icon"
         :icon-class="stat.color"
+        :loading="isLoading"
       />
     </div>
 
@@ -78,7 +81,22 @@ const stats = computed(() => [
         </template>
 
         <div
-          v-if="recentLogs?.length"
+          v-if="logsPending"
+          class="space-y-2"
+        >
+          <div
+            v-for="n in 5"
+            :key="n"
+            class="flex items-start gap-2"
+          >
+            <USkeleton class="h-5 w-14 shrink-0" />
+            <USkeleton class="h-5 w-24 shrink-0" />
+            <USkeleton class="h-5 flex-1" />
+          </div>
+        </div>
+
+        <div
+          v-else-if="recentLogs?.length"
           class="space-y-2"
         >
           <div
@@ -127,7 +145,24 @@ const stats = computed(() => [
         </template>
 
         <div
-          v-if="unresolvedErrors?.length"
+          v-if="errorsPending"
+          class="space-y-3"
+        >
+          <div
+            v-for="n in 3"
+            :key="n"
+            class="flex items-start gap-2"
+          >
+            <USkeleton class="size-4 shrink-0 mt-0.5" />
+            <div class="flex-1 space-y-1">
+              <USkeleton class="h-4 w-32" />
+              <USkeleton class="h-3 w-48" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-else-if="unresolvedErrors?.length"
           class="space-y-3"
         >
           <div
