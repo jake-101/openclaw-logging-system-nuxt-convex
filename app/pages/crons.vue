@@ -254,19 +254,20 @@ function toggleJob(jobId: string) {
               </span>
               <span
                 v-if="run.summary"
-                class="text-sm text-highlighted truncate flex-1"
+                class="text-sm text-highlighted flex-1 min-w-0"
               >
                 {{ run.summary }}
               </span>
               <span
                 v-if="run.error"
-                class="text-sm text-red-500 truncate flex-1"
+                class="text-sm text-red-500 flex-1 min-w-0"
               >
                 {{ run.error }}
               </span>
               <span
                 v-if="run.sessionKey"
-                class="text-xs font-mono text-muted shrink-0"
+                class="text-xs font-mono text-muted truncate shrink min-w-0 max-w-[30%]"
+                :title="run.sessionKey"
               >
                 {{ run.sessionKey }}
               </span>
