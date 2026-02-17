@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useConvexQuery } from '@convex-vue/core'
-import { api } from '~/convex/_generated/api'
+import { api } from '#convex/_generated/api'
 
 const { data: sessions } = useConvexQuery(api.sessions.list, { limit: 50 })
 const { data: recentLogs } = useConvexQuery(api.logs.list, { limit: 10 })

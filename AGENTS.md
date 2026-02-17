@@ -106,7 +106,8 @@ eslint.config.mjs       # ESLint flat config (extends @nuxt/eslint)
 
 - Nuxt auto-imports: `ref`, `computed`, `watch`, `useFetch`, `useRoute`,
   `navigateTo`, `definePageMeta`, `useHead`, `useSeoMeta` -- do NOT import these
-- Convex imports: `import { api } from '~/convex/_generated/api'`
+- Convex imports: `import { api } from '#convex/_generated/api'`
+  (`#convex` alias is defined in nuxt.config.ts, resolves to project-root `convex/`)
 - Convex server: `import { query, mutation } from './_generated/server'`
 - Convex values: `import { v } from 'convex/values'`
 
