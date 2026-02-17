@@ -187,6 +187,7 @@ def backfill_file(path: str) -> int:
                             level="info",
                             message=f"Spawned sub-agent: {label} on {sub_model}",
                             tool_name="sessions_spawn",
+                            tool_success=True,
                             metadata={"label": label, "model": sub_model, "agentId": sub_agent},
                             model=model_full,
                         )
@@ -204,6 +205,7 @@ def backfill_file(path: str) -> int:
                             level="info",
                             message=f"Message sent via {channel}",
                             tool_name="message",
+                            tool_success=True,
                             metadata={"channel": channel, "target": target},
                             model=model_full,
                             channel=str(channel) if channel else None,
@@ -221,6 +223,7 @@ def backfill_file(path: str) -> int:
                             level="info",
                             message=f"File written: {p}",
                             tool_name=str(name),
+                            tool_success=True,
                             metadata={"path": p},
                             model=model_full,
                         )
@@ -241,6 +244,7 @@ def backfill_file(path: str) -> int:
                             level="info",
                             message=f"Cron job created: {job_name}",
                             tool_name="cron",
+                            tool_success=True,
                             metadata={"schedule": schedule, "payload_kind": payload_kind},
                             model=model_full,
                         )
