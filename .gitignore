@@ -22,3 +22,6 @@ logs
 .env
 .env.*
 !.env.example
+
+# Beads issue tracker (contains personal data)
+.beads/

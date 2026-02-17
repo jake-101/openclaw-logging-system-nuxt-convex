@@ -1,60 +1,106 @@
-# Nuxt Starter Template
+# OpenClaw Logging System
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Real-time agent logging and monitoring dashboard for OpenClaw agents (BadgerBot). Built with Nuxt 4 and Convex.
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+## Features
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+- **Log Viewer** -- Real-time log stream with level filtering and full-text search
+- **Session Browser** -- Aggregated session summaries with token usage, cost, and tool call stats
+- **Error Dashboard** -- Dedicated error tracking with resolution state management
+- **Analytics** -- Charts for log volume, error rates, and session trends over time
+- **Model Usage** -- Per-model and per-provider token/cost/latency analytics
+- **Cron Monitoring** -- Track cron job executions with duration and status
+- **Rate Limit Tracking** -- Monitor API rate limit events with retry-after info
+- **Self-Documenting API** -- Agents can query `apiDocs.describe` to discover the full API schema at runtime
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+## Tech Stack
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+- **Framework**: [Nuxt 4](https://nuxt.com) (Vue 3 Composition API)
+- **Backend**: [Convex](https://convex.dev) (real-time database + TypeScript functions)
+- **UI**: [@nuxt/ui v4](https://ui.nuxt.com) (Reka UI + Tailwind CSS v4)
+- **Charts**: [Chart.js](https://www.chartjs.org) via vue-chartjs
+- **Testing**: [Vitest](https://vitest.dev) + @vue/test-utils + happy-dom
+- **Package Manager**: pnpm
 
 ## Quick Start
 
-```bash [Terminal]
-npm create nuxt@latest -- -t github:nuxt-ui-templates/starter
-```
+### Prerequisites
 
-## Deploy your own
+- Node.js 20+
+- pnpm 10+
+- A Convex deployment (cloud or [self-hosted](https://github.com/get-convex/convex-backend))
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
-
-## Setup
-
-Make sure to install the dependencies:
+### Setup
 
 ```bash
+# Clone the repo
+git clone https://github.com/your-username/openclaw-logging-system.git
+cd openclaw-logging-system
+
+# Install dependencies
 pnpm install
-```
 
-## Development Server
+# Configure environment
+cp .env.example .env
+# Edit .env with your Convex URL and admin key
 
-Start the development server on `http://localhost:3000`:
+# Start Convex dev server (watches convex/ for changes)
+pnpm convex:dev
 
-```bash
+# Start Nuxt dev server
 pnpm dev
 ```
 
-## Production
+The dashboard will be available at `http://localhost:3000`.
 
-Build the application for production:
+### Agent Integration
 
-```bash
-pnpm build
+See [docs/agent-integration.md](docs/agent-integration.md) for the full integration guide, including a ready-to-use `ConvexLogger` wrapper class.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start Nuxt dev server with HMR |
+| `pnpm build` | Production build |
+| `pnpm preview` | Preview production build locally |
+| `pnpm lint` | ESLint check |
+| `pnpm lint:fix` | ESLint with auto-fix |
+| `pnpm typecheck` | TypeScript type checking |
+| `pnpm test` | Run all tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm convex:dev` | Start Convex dev server |
+| `pnpm convex:deploy` | Deploy Convex functions to production |
+
+## Project Structure
+
+```
+app/                      # Nuxt 4 frontend
+  components/             # Auto-imported Vue components
+  composables/            # Shared composables (charts, navigation)
+  pages/                  # File-based routing (9 pages)
+  plugins/                # Chart.js registration, Convex client
+  utils/                  # Formatting helpers, color constants
+convex/                   # Convex backend
+  schema.ts               # Database schema (6 tables)
+  logs.ts                 # Log CRUD
+  sessions.ts             # Session management
+  errors.ts               # Error tracking
+  cronRuns.ts             # Cron job tracking
+  rateLimits.ts           # Rate limit events
+  modelUsage.ts           # Model API call tracking
+  apiDocs.ts              # Self-documenting API endpoint
+docs/                     # Integration documentation
 ```
 
-Locally preview production build:
+## Database Schema
 
-```bash
-pnpm preview
-```
+Six tables: `logs`, `sessions`, `errors`, `cronRuns`, `rateLimits`, `modelUsage`.
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+All timestamps are Unix milliseconds. Session keys (format: `{agentId}-{date}-{shortId}`) link logs to sessions.
+
+For the full schema, see [`convex/schema.ts`](convex/schema.ts) or query the `apiDocs.describe` endpoint at runtime.
+
+## License
+
+[MIT](LICENSE)
