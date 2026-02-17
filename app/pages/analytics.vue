@@ -5,25 +5,19 @@ import { Bar, Doughnut, Line } from 'vue-chartjs'
 
 definePageMeta({ title: 'Analytics' })
 
-const { data: sessions, isLoading: sessionsPending } = useConvexQuery(api.sessions.list, { limit: 50 })
-const { data: logs, isLoading: logsPending } = useConvexQuery(api.logs.list, { limit: 100 })
+// Single server-side aggregate -- replaces sessions.list + logs.list subscriptions.
+// No raw rows transferred over the WebSocket; all aggregation happens on the server.
+const { data: analytics, isLoading: isPending } = useConvexQuery(api.analytics.summary, {})
 
-const isPending = computed(() => sessionsPending.value || logsPending.value)
-
-// --- Cost over time (by session, sorted by start time) ---
+// --- Cost over time (pre-sorted by session start time on the server) ---
 const costChartData = computed(() => {
-  if (!sessions.value?.length) return null
-  const sorted = [...sessions.value]
-    .filter(s => s.estimatedCost !== undefined && s.estimatedCost !== null)
-    .sort((a, b) => a.startedAt - b.startedAt)
-
-  if (!sorted.length) return null
-
+  const timeline = analytics.value?.costTimeline
+  if (!timeline?.length) return null
   return {
-    labels: sorted.map(s => new Date(s.startedAt).toLocaleDateString()),
+    labels: timeline.map(t => t.date),
     datasets: [{
       label: 'Cost (USD)',
-      data: sorted.map(s => s.estimatedCost ?? 0),
+      data: timeline.map(t => t.cost),
       borderColor: 'rgb(34, 197, 94)',
       backgroundColor: 'rgba(34, 197, 94, 0.1)',
       fill: true,
@@ -32,56 +26,26 @@ const costChartData = computed(() => {
   }
 })
 
-// --- Token usage by session ---
+// --- Token usage by session (pre-sorted on server) ---
 const tokenChartData = computed(() => {
-  if (!sessions.value?.length) return null
-  const sorted = [...sessions.value]
-    .filter(s => s.totalTokens !== undefined && s.totalTokens !== null && s.totalTokens > 0)
-    .sort((a, b) => a.startedAt - b.startedAt)
-
-  if (!sorted.length) return null
-
+  const timeline = analytics.value?.tokenTimeline
+  if (!timeline?.length) return null
   return {
-    labels: sorted.map(s => s.sessionKey.length > 16 ? `${s.sessionKey.slice(0, 16)}...` : s.sessionKey),
+    labels: timeline.map(t => t.sessionKey),
     datasets: [{
       label: 'Tokens',
-      data: sorted.map(s => s.totalTokens ?? 0),
+      data: timeline.map(t => t.tokens),
       backgroundColor: 'rgba(59, 130, 246, 0.7)',
       borderRadius: 4
     }]
   }
 })
 
-// --- Tool performance (from logs with toolName) ---
-const toolStats = computed(() => {
-  if (!logs.value?.length) return []
-  const tools = new Map<string, { total: number, success: number, totalDuration: number, count: number }>()
-
-  for (const log of logs.value) {
-    if (!log.toolName) continue
-    const existing = tools.get(log.toolName) ?? { total: 0, success: 0, totalDuration: 0, count: 0 }
-    existing.total++
-    if (log.toolSuccess) existing.success++
-    if (log.toolDuration) {
-      existing.totalDuration += log.toolDuration
-      existing.count++
-    }
-    tools.set(log.toolName, existing)
-  }
-
-  return Array.from(tools.entries())
-    .map(([name, stats]) => ({
-      name,
-      calls: stats.total,
-      successRate: stats.total > 0 ? Math.round((stats.success / stats.total) * 100) : 0,
-      avgDuration: stats.count > 0 ? Math.round(stats.totalDuration / stats.count) : 0
-    }))
-    .sort((a, b) => b.calls - a.calls)
-})
-
+// --- Tool usage chart (top 10) ---
 const toolChartData = computed(() => {
-  if (!toolStats.value.length) return null
-  const top = toolStats.value.slice(0, 10)
+  const tools = analytics.value?.toolStats
+  if (!tools?.length) return null
+  const top = tools.slice(0, 10)
   return {
     labels: top.map(t => t.name),
     datasets: [{
@@ -93,17 +57,16 @@ const toolChartData = computed(() => {
   }
 })
 
-// --- Log level distribution ---
+// --- Log level distribution doughnut ---
 const levelDistribution = computed(() => {
-  if (!logs.value?.length) return null
-  const counts: Record<string, number> = { debug: 0, info: 0, warn: 0, error: 0 }
-  for (const log of logs.value) {
-    counts[log.level] = (counts[log.level] ?? 0) + 1
-  }
+  const dist = analytics.value?.levelDistribution
+  if (!dist) return null
+  const total = Object.values(dist).reduce((a, b) => a + b, 0)
+  if (!total) return null
   return {
     labels: ['Debug', 'Info', 'Warn', 'Error'],
     datasets: [{
-      data: [counts.debug ?? 0, counts.info ?? 0, counts.warn ?? 0, counts.error ?? 0],
+      data: [dist.debug ?? 0, dist.info ?? 0, dist.warn ?? 0, dist.error ?? 0],
       backgroundColor: [
         'rgba(148, 163, 184, 0.7)',
         'rgba(34, 197, 94, 0.7)',
@@ -114,22 +77,6 @@ const levelDistribution = computed(() => {
   }
 })
 
-// --- Summary stats ---
-const totalCost = computed(() => {
-  if (!sessions.value) return 0
-  return sessions.value.reduce((sum, s) => sum + (s.estimatedCost ?? 0), 0)
-})
-
-const totalTokens = computed(() => {
-  if (!sessions.value) return 0
-  return sessions.value.reduce((sum, s) => sum + (s.totalTokens ?? 0), 0)
-})
-
-const totalToolCalls = computed(() => {
-  if (!sessions.value) return 0
-  return sessions.value.reduce((sum, s) => sum + s.toolCalls, 0)
-})
-
 const { line: lineOptions, bar: barOptions, doughnut: doughnutOptions } = useChartOptions()
 </script>
 
@@ -138,21 +85,21 @@ const { line: lineOptions, bar: barOptions, doughnut: doughnutOptions } = useCha
     <!-- Summary Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <StatCard
-        :value="`$${totalCost.toFixed(4)}`"
+        :value="`$${(analytics?.totalCost ?? 0).toFixed(4)}`"
         label="Total Cost"
         icon="i-lucide-dollar-sign"
         icon-class="text-green-500"
         :loading="isPending"
       />
       <StatCard
-        :value="totalTokens.toLocaleString()"
+        :value="(analytics?.totalTokens ?? 0).toLocaleString()"
         label="Total Tokens"
         icon="i-lucide-hash"
         icon-class="text-blue-500"
         :loading="isPending"
       />
       <StatCard
-        :value="totalToolCalls.toLocaleString()"
+        :value="(analytics?.totalToolCalls ?? 0).toLocaleString()"
         label="Total Tool Calls"
         icon="i-lucide-wrench"
         icon-class="text-purple-500"
@@ -259,14 +206,14 @@ const { line: lineOptions, bar: barOptions, doughnut: doughnutOptions } = useCha
     </div>
 
     <!-- Tool Performance Table -->
-    <UCard v-if="toolStats.length">
+    <UCard v-if="analytics?.toolStats?.length">
       <template #header>
         <h3 class="font-semibold text-highlighted">
           Tool Performance
         </h3>
       </template>
       <UTable
-        :data="toolStats"
+        :data="analytics.toolStats"
         :columns="[
           { accessorKey: 'name', header: 'Tool' },
           { accessorKey: 'calls', header: 'Calls' },

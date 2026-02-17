@@ -36,8 +36,8 @@ const searchQueryArgs = computed(() => {
     level?: 'debug' | 'info' | 'warn' | 'error'
     sessionKey?: string
   } = {
-    searchTerm: isSearching.value ? searchTerm.value.trim() : '__disabled__',
-    limit: isSearching.value ? logLimit.value : 1
+    searchTerm: searchTerm.value.trim() || '',
+    limit: logLimit.value
   }
   if (levelFilter.value && levelFilter.value !== 'all') {
     args.level = levelFilter.value as 'debug' | 'info' | 'warn' | 'error'
@@ -49,7 +49,12 @@ const searchQueryArgs = computed(() => {
 })
 
 const { data: listLogs, isLoading: listPending } = useConvexQuery(api.logs.list, listArgs)
-const { data: searchLogs, isLoading: searchPending } = useConvexQuery(api.logs.search, searchQueryArgs)
+// Only subscribe to search when actively searching -- avoids double server load on every log write
+const { data: searchLogs, isLoading: searchPending } = useConvexQuery(
+  api.logs.search,
+  searchQueryArgs,
+  { enabled: isSearching }
+)
 
 const isPending = computed(() => isSearching.value ? searchPending.value : listPending.value)
 

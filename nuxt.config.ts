@@ -19,7 +19,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       convexUrl: process.env.CONVEX_URL || '',
-      convexSiteUrl: process.env.CONVEX_SITE_URL || ''
+      convexSiteUrl: process.env.CONVEX_SITE_URL || '',
+      appName: process.env.APP_NAME || 'OpenClaw',
+      appLogoUrl: process.env.APP_LOGO_URL || ''
     }
   },
 

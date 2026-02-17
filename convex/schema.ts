@@ -92,6 +92,24 @@ export default defineSchema({
     .index('by_provider', ['provider', 'timestamp'])
     .index('by_time', ['timestamp']),
 
+  // Atomic daily log counters -- incremented on every logs.create
+  // Avoids scanning the full logs table to compute countToday
+  logCounters: defineTable({
+    date: v.string(), // ISO date string: "2026-02-17"
+    count: v.number()
+  })
+    .index('by_date', ['date']),
+
+  // Pre-aggregated daily model usage stats -- populated by hourly cron
+  // Avoids scanning the full modelUsage table in dailySummary
+  dailyStats: defineTable({
+    date: v.string(), // ISO date string: "2026-02-17"
+    calls: v.number(),
+    totalTokens: v.number(),
+    totalCostUsd: v.number()
+  })
+    .index('by_date', ['date']),
+
   // Model usage tracking
   modelUsage: defineTable({
     sessionKey: v.string(),

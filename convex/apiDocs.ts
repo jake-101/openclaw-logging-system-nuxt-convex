@@ -135,6 +135,7 @@ export const describe = query({
 
       queries: {
         'logs.list': 'List logs, optionally filtered by sessionKey, level, limit',
+        'logs.countToday': 'O(1) count of logs created today -- reads from atomic logCounters table',
         'logs.search': 'Search logs by message/agent/tool content with optional sessionKey and level filters',
         'sessions.list': 'List sessions ordered by last activity',
         'sessions.get': 'Get a single session by sessionKey',
@@ -142,14 +143,16 @@ export const describe = query({
         'errors.bySession': 'List errors for a specific session',
         'cronRuns.listRecent': 'List recent cron runs, optionally filtered by status',
         'cronRuns.listByJob': 'List runs for a specific job ID',
-        'cronRuns.getJobStats': 'Get success/failure/duration stats for a job over N days',
+        'cronRuns.getJobStats': 'Get success/failure/duration stats for a job over N days (uses index range, no full collect)',
         'rateLimits.listRecent': 'List recent rate limit events within N hours',
         'rateLimits.listByProvider': 'List rate limit events for a specific provider',
         'rateLimits.getStats': 'Get rate limit stats (total, by provider, hourly rate) over N hours',
         'modelUsage.byModel': 'Aggregate model usage stats (calls, tokens, cost, latency) over N hours',
         'modelUsage.byProvider': 'Aggregate provider usage stats (calls, tokens, cost, models) over N hours',
         'modelUsage.latencyStats': 'Get latency percentiles (p50/p90/p95/p99) optionally filtered by model',
-        'modelUsage.dailySummary': 'Daily aggregated calls, tokens, and cost over N days',
+        'modelUsage.dailySummary': 'Daily aggregated calls, tokens, and cost over N days -- reads from pre-aggregated dailyStats table (max 7 rows)',
+        'analytics.summary': 'Server-side analytics aggregate for the dashboard (totalCost, totalTokens, totalToolCalls, costTimeline, tokenTimeline, toolStats, levelDistribution)',
+        'dashboard.snapshot': 'Single snapshot query for the dashboard home page (recentLogs, recentSessions, unresolvedErrors, logsToday)',
         'apiDocs.describe': 'This endpoint -- returns API documentation'
       }
     }

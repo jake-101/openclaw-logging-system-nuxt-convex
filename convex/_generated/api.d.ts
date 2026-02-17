@@ -8,9 +8,12 @@
  * @module
  */
 
+import type * as analytics from "../analytics.js";
 import type * as apiDocs from "../apiDocs.js";
 import type * as auth from "../auth.js";
 import type * as cronRuns from "../cronRuns.js";
+import type * as crons from "../crons.js";
+import type * as dashboard from "../dashboard.js";
 import type * as errors from "../errors.js";
 import type * as http from "../http.js";
 import type * as logs from "../logs.js";
@@ -25,9 +28,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  analytics: typeof analytics;
   apiDocs: typeof apiDocs;
   auth: typeof auth;
   cronRuns: typeof cronRuns;
+  crons: typeof crons;
+  dashboard: typeof dashboard;
   errors: typeof errors;
   http: typeof http;
   logs: typeof logs;

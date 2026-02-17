@@ -2,6 +2,7 @@
 definePageMeta({ title: 'Login', layout: false })
 
 const { login } = useAuth()
+const { appName, appLogoUrl } = useRuntimeConfig().public
 const toast = useToast()
 
 const email = ref('')
@@ -41,13 +42,20 @@ async function handleSubmit() {
       <!-- Logo / Branding -->
       <div class="text-center">
         <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--ui-primary)">
+          <img
+            v-if="appLogoUrl"
+            :src="appLogoUrl"
+            :alt="appName"
+            class="h-8 w-8 rounded object-contain"
+          >
           <UIcon
+            v-else
             name="i-lucide-paw-print"
             class="h-7 w-7 text-white"
           />
         </div>
         <h1 class="text-2xl font-bold text-(--ui-text-highlighted)">
-          OpenClaw
+          {{ appName }}
         </h1>
         <p class="mt-1 text-sm text-(--ui-text-muted)">
           Agent Logging Dashboard

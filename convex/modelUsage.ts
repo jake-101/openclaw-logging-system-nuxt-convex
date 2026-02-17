@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 
 // Max records to aggregate in a single query to avoid Convex execution timeout.
 // With ~250 calls/hour, 2000 covers ~8 hours of data safely.
@@ -243,36 +243,95 @@ export const summary = query({
   }
 })
 
+/**
+ * Read daily stats from the pre-aggregated dailyStats table.
+ * Fast O(N days) lookup instead of scanning raw modelUsage rows.
+ * Populated by the hourly cron (convex/crons.ts → aggregateHourlyStats).
+ */
 export const dailySummary = query({
   args: {
     days: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const cutoff = Date.now() - (args.days ?? 7) * 24 * 60 * 60 * 1000
+    const numDays = args.days ?? 7
 
-    const usage = await ctx.db
-      .query('modelUsage')
-      .withIndex('by_time', q => q.gte('timestamp', cutoff))
+    // Build a set of the last N date strings so we return all days
+    // (even those with zero activity) in a predictable order
+    const dates: string[] = []
+    for (let i = numDays - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+      dates.push(d.toISOString().split('T')[0]!)
+    }
+
+    // At most numDays rows -- no full-table scan
+    const rows = await ctx.db
+      .query('dailyStats')
+      .withIndex('by_date')
       .order('desc')
-      .take(MAX_RECORDS)
+      .take(numDays)
 
-    const byDay: Record<string, {
-      calls: number
-      tokens: number
-      cost: number
-    }> = {}
+    const byDate = new Map(rows.map(r => [r.date, r]))
+    const byDay: Record<string, { calls: number, tokens: number, cost: number }> = {}
 
-    for (const u of usage) {
-      const day = new Date(u.timestamp).toISOString().split('T')[0]!
-      if (!byDay[day]) {
-        byDay[day] = { calls: 0, tokens: 0, cost: 0 }
+    for (const date of dates) {
+      const row = byDate.get(date)
+      byDay[date] = {
+        calls: row?.calls ?? 0,
+        tokens: row?.totalTokens ?? 0,
+        cost: row?.totalCostUsd ?? 0
       }
-      const entry = byDay[day]!
-      entry.calls++
-      entry.tokens += u.totalTokens
-      entry.cost += u.costUsd ?? 0
     }
 
     return byDay
+  }
+})
+
+/**
+ * Internal mutation called by the hourly cron to aggregate the previous
+ * hour's modelUsage records into the dailyStats table.
+ */
+export const aggregateHourlyStats = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now()
+    // Aggregate the previous full hour (not the current in-progress hour)
+    const hourAgo = now - 60 * 60 * 1000
+
+    const usage = await ctx.db
+      .query('modelUsage')
+      .withIndex('by_time', q => q.gte('timestamp', hourAgo).lt('timestamp', now))
+      .take(10000) // hard cap; at 250 calls/hour this is 40x headroom
+
+    if (usage.length === 0) return
+
+    // Group by day (a single hour could straddle midnight, hence the grouping)
+    const byDay: Record<string, { calls: number, totalTokens: number, totalCostUsd: number }> = {}
+
+    for (const u of usage) {
+      const date = new Date(u.timestamp).toISOString().split('T')[0]!
+      const entry = byDay[date] ?? { calls: 0, totalTokens: 0, totalCostUsd: 0 }
+      entry.calls++
+      entry.totalTokens += u.totalTokens
+      entry.totalCostUsd += u.costUsd ?? 0
+      byDay[date] = entry
+    }
+
+    // Upsert each day's aggregated stats
+    for (const [date, delta] of Object.entries(byDay)) {
+      const existing = await ctx.db
+        .query('dailyStats')
+        .withIndex('by_date', q => q.eq('date', date))
+        .first()
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          calls: existing.calls + delta.calls,
+          totalTokens: existing.totalTokens + delta.totalTokens,
+          totalCostUsd: existing.totalCostUsd + delta.totalCostUsd
+        })
+      } else {
+        await ctx.db.insert('dailyStats', { date, ...delta })
+      }
+    }
   }
 })

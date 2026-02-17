@@ -2,6 +2,7 @@
 const { sidebarGroups } = useNavigation()
 const { logout, userEmail } = useAuth()
 const toast = useToast()
+const { appName, appLogoUrl } = useRuntimeConfig().public
 
 async function handleLogout() {
   await logout()
@@ -20,17 +21,32 @@ async function handleLogout() {
         v-if="!collapsed"
         class="flex items-center gap-2"
       >
+        <img
+          v-if="appLogoUrl"
+          :src="appLogoUrl"
+          :alt="appName"
+          class="size-6 rounded object-contain"
+        >
         <UIcon
+          v-else
           name="i-lucide-paw-print"
           class="size-6 text-primary"
         />
-        <span class="font-bold text-highlighted">OpenClaw</span>
+        <span class="font-bold text-highlighted">{{ appName }}</span>
       </div>
-      <UIcon
-        v-else
-        name="i-lucide-paw-print"
-        class="size-6 text-primary mx-auto"
-      />
+      <template v-else>
+        <img
+          v-if="appLogoUrl"
+          :src="appLogoUrl"
+          :alt="appName"
+          class="size-6 rounded object-contain mx-auto"
+        >
+        <UIcon
+          v-else
+          name="i-lucide-paw-print"
+          class="size-6 text-primary mx-auto"
+        />
+      </template>
     </template>
 
     <template #default="{ collapsed }">

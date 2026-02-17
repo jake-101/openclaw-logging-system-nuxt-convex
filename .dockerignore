@@ -1,0 +1,20 @@
+node_modules
+.output
+.nuxt
+.nitro
+.cache
+.data
+dist
+
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+
+*.log
+.DS_Store
+
+# Beads issue tracker
+.beads/

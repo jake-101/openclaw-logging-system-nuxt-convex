@@ -204,7 +204,7 @@ component on first run).
 **Convex plugin** (`convex.client.ts`) passes the auth adapter to
 `createConvexVue()` with `installNavigationGuard: true`. All routes except
 `/login` require authentication. The `convexSiteUrl` runtime config variable
-must be set to the Convex site URL (e.g. `http://192.168.10.35:3211`).
+must be set to the Convex site URL (e.g. `http://localhost:3211`).
 
 ## Convex Schema Overview
 

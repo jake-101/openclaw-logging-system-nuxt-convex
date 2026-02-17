@@ -4,20 +4,22 @@ import { api } from '#convex/_generated/api'
 
 definePageMeta({ title: 'Dashboard' })
 
-const { data: sessions, isLoading: sessionsPending } = useConvexQuery(api.sessions.list, { limit: 50 })
-const { data: recentLogs, isLoading: logsPending } = useConvexQuery(api.logs.list, { limit: 10 })
-const { data: unresolvedErrors, isLoading: errorsPending } = useConvexQuery(api.errors.unresolved, {})
-const { data: logsToday, isLoading: logsTodayPending } = useConvexQuery(api.logs.countToday, {})
+// Single snapshot query replaces 4 separate subscriptions (logs.list,
+// logs.countToday, sessions.list, errors.unresolved). Each log write now
+// triggers one re-execution instead of four.
+const { data: snapshot, isLoading } = useConvexQuery(api.dashboard.snapshot, {})
 
-const isLoading = computed(() => sessionsPending.value || logsPending.value || errorsPending.value || logsTodayPending.value)
+const recentLogs = computed(() => snapshot.value?.recentLogs ?? [])
+const unresolvedErrors = computed(() => snapshot.value?.unresolvedErrors ?? [])
+const sessions = computed(() => snapshot.value?.recentSessions ?? [])
+const logsToday = computed(() => snapshot.value?.logsToday ?? 0)
 
-const totalSessions = computed(() => sessions.value?.length ?? 0)
-const totalErrors = computed(() => unresolvedErrors.value?.length ?? 0)
+const totalSessions = computed(() => sessions.value.length)
+const totalErrors = computed(() => unresolvedErrors.value.length)
 
-const activeSessions = computed(() => {
-  if (!sessions.value) return 0
-  return sessions.value.filter(s => isSessionActive(s.lastActiveAt)).length
-})
+const activeSessions = computed(() =>
+  sessions.value.filter(s => isSessionActive(s.lastActiveAt)).length
+)
 
 const stats = computed(() => [
   {
@@ -40,7 +42,7 @@ const stats = computed(() => [
   },
   {
     label: 'Logs Today',
-    value: logsToday.value ?? 0,
+    value: logsToday.value,
     icon: 'i-lucide-scroll-text',
     color: 'text-muted' as const
   }
@@ -81,7 +83,7 @@ const stats = computed(() => [
         </template>
 
         <div
-          v-if="logsPending"
+          v-if="isLoading"
           class="space-y-2"
         >
           <div
@@ -96,7 +98,7 @@ const stats = computed(() => [
         </div>
 
         <div
-          v-else-if="recentLogs?.length"
+          v-else-if="recentLogs.length"
           class="space-y-2"
         >
           <div
@@ -145,7 +147,7 @@ const stats = computed(() => [
         </template>
 
         <div
-          v-if="errorsPending"
+          v-if="isLoading"
           class="space-y-3"
         >
           <div
@@ -162,7 +164,7 @@ const stats = computed(() => [
         </div>
 
         <div
-          v-else-if="unresolvedErrors?.length"
+          v-else-if="unresolvedErrors.length"
           class="space-y-3"
         >
           <div

@@ -74,11 +74,11 @@ export const getJobStats = query({
   handler: async (ctx, args) => {
     const cutoff = Date.now() - (args.days ?? 30) * 24 * 60 * 60 * 1000
 
+    const MAX_RUNS = 1000
     const runs = await ctx.db
       .query('cronRuns')
-      .withIndex('by_job', q => q.eq('jobId', args.jobId))
-      .filter(q => q.gte(q.field('completedAt'), cutoff))
-      .collect()
+      .withIndex('by_job', q => q.eq('jobId', args.jobId).gte('completedAt', cutoff))
+      .take(MAX_RUNS)
 
     const stats = {
       totalRuns: runs.length,

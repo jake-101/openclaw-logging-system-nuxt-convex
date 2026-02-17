@@ -55,7 +55,7 @@ export const getStats = query({
     const events = await ctx.db
       .query('rateLimits')
       .withIndex('by_time', q => q.gte('timestamp', cutoff))
-      .collect()
+      .take(1000)
 
     const byProvider: Record<string, number> = {}
     for (const event of events) {

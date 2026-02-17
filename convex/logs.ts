@@ -42,12 +42,12 @@ export const list = query({
 export const countToday = query({
   args: {},
   handler: async (ctx) => {
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000
-    const logs = await ctx.db
-      .query('logs')
-      .withIndex('by_timestamp', q => q.gte('timestamp', cutoff))
-      .collect()
-    return logs.length
+    const date = new Date().toISOString().split('T')[0]!
+    const counter = await ctx.db
+      .query('logCounters')
+      .withIndex('by_date', q => q.eq('date', date))
+      .first()
+    return counter?.count ?? 0
   }
 })
 
@@ -123,6 +123,20 @@ export const create = mutation({
     toolSuccess: v.optional(v.boolean())
   },
   handler: async (ctx, args) => {
-    return ctx.db.insert('logs', args)
+    const id = await ctx.db.insert('logs', args)
+
+    // Atomically increment today's log counter (O(1) point lookup)
+    const date = new Date(args.timestamp).toISOString().split('T')[0]!
+    const counter = await ctx.db
+      .query('logCounters')
+      .withIndex('by_date', q => q.eq('date', date))
+      .first()
+    if (counter) {
+      await ctx.db.patch(counter._id, { count: counter.count + 1 })
+    } else {
+      await ctx.db.insert('logCounters', { date, count: 1 })
+    }
+
+    return id
   }
 })
